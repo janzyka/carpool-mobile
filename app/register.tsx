@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,12 +15,14 @@ import {
   View,
 } from 'react-native';
 import { registerUser } from '../src/api/auth';
+import { useAuthStore } from '../src/store/authStore';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [icon, setIcon] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { setPendingRegistration } = useAuthStore();
 
   const pickIcon = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -41,7 +43,10 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const data = await registerUser(name.trim(), phoneNumber.trim(), icon ?? undefined);
+      const trimmedName = name.trim();
+      const trimmedPhone = phoneNumber.trim();
+      const data = await registerUser(trimmedName, trimmedPhone, icon ?? undefined);
+      setPendingRegistration({ name: trimmedName, phoneNumber: trimmedPhone, icon: icon ?? undefined });
       router.push({ pathname: '/verify', params: { userId: String(data.id) } });
     } catch {
       Alert.alert('Registration failed', 'Please check your details and try again.');
@@ -55,6 +60,7 @@ export default function RegisterScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Welcome to Carpool</Text>
         <Text style={styles.subtitle}>Enter your details to get started</Text>

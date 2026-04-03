@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 // TODO: replace with your deployed API Gateway base URL
-const BASE_URL = 'https://<api-id>.execute-api.eu-central-1.amazonaws.com/dev';
+const BASE_URL = 'https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

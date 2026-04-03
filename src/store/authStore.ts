@@ -4,19 +4,29 @@ import { create } from 'zustand';
 const KEY_AUTH_KEY = 'carpool_auth_key';
 const KEY_USER_ID  = 'carpool_user_id';
 
+interface PendingRegistration {
+  name: string;
+  phoneNumber: string;
+  icon?: string;
+}
+
 interface AuthState {
   authKey: string | null;
   userId: number | null;
   isLoading: boolean;
+  pendingRegistration: PendingRegistration | null;
   loadAuth: () => Promise<void>;
   setAuth: (authKey: string, userId: number) => Promise<void>;
   clearAuth: () => Promise<void>;
+  setPendingRegistration: (data: PendingRegistration) => void;
+  clearPendingRegistration: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   authKey: null,
   userId: null,
   isLoading: true,
+  pendingRegistration: null,
 
   loadAuth: async () => {
     const [authKey, rawUserId] = await Promise.all([
@@ -45,4 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     ]);
     set({ authKey: null, userId: null });
   },
+
+  setPendingRegistration: (data) => set({ pendingRegistration: data }),
+  clearPendingRegistration: () => set({ pendingRegistration: null }),
 }));

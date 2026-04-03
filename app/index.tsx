@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
@@ -13,6 +13,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <View style={styles.center}>
+        <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" color="#2563EB" />
       </View>
     );
