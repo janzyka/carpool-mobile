@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRef } from 'react';
+import UserAvatar from './UserAvatar';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { IncomingInterest } from '../store/requestsStore';
@@ -58,7 +59,7 @@ export default function SwipeableRequestRow({ interest, fromName, toName, onAcce
       overshootRight={false}
     >
       <View style={styles.row}>
-        <MaterialCommunityIcons name="account-circle" size={40} color="#D1D5DB" style={styles.avatar} />
+        <UserAvatar userId={interest.userId} size={40} />
         <View style={styles.info}>
           <View style={styles.route}>
             <Text style={styles.poi} numberOfLines={1}>{fromName}</Text>
@@ -105,8 +106,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
-  avatar: { marginRight: 12 },
-  info: { flex: 1 },
+  info: { flex: 1, marginLeft: 12 },
   route: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   poi:   { fontSize: 15, color: '#111827', fontWeight: '500', flexShrink: 1 },
   arrow: { fontSize: 14, color: '#9CA3AF' },

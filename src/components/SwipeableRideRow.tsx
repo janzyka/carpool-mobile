@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRef } from 'react';
+import UserAvatar from './UserAvatar';
 import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ride } from '../api/rides';
@@ -82,7 +83,7 @@ export default function SwipeableRideRow({
   const rowContent = (
     <View style={styles.row}>
       <View style={styles.avatarWrapper}>
-        <MaterialCommunityIcons name="account-circle" size={40} color="#D1D5DB" />
+        <UserAvatar userId={ride.userId} size={40} />
         {isOwner && (
           <MaterialCommunityIcons name="heart" size={12} color="#EF4444" style={styles.badge} />
         )}

@@ -50,11 +50,12 @@ export default function HomeScreen() {
         <View style={styles.headerSide}>
           {activeTab === 'rides' && (
             <Pressable onPress={fetchRides} disabled={ridesLoading} hitSlop={12}>
-              <MaterialCommunityIcons
-                name="refresh"
-                size={24}
-                color={ridesLoading ? '#D1D5DB' : '#6B7280'}
-              />
+              <MaterialCommunityIcons name="refresh" size={24} color={ridesLoading ? '#D1D5DB' : '#6B7280'} />
+            </Pressable>
+          )}
+          {activeTab === 'requests' && (
+            <Pressable onPress={() => currentUserId && fetchRequests(currentUserId)} disabled={requestsLoading} hitSlop={12}>
+              <MaterialCommunityIcons name="refresh" size={24} color={requestsLoading ? '#D1D5DB' : '#6B7280'} />
             </Pressable>
           )}
         </View>
