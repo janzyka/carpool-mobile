@@ -3,15 +3,20 @@ import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import AddRideModal from '../src/components/AddRideModal';
+import RequestsScreen from '../src/components/RequestsScreen';
 import RidesScreen from '../src/components/RidesScreen';
+import { useAuthStore } from '../src/store/authStore';
+import { useIgnoredRidesStore } from '../src/store/ignoredRidesStore';
+import { useMyInterestsStore } from '../src/store/myInterestsStore';
 import { usePoiStore } from '../src/store/poiStore';
+import { useRequestsStore } from '../src/store/requestsStore';
 import { useRidesStore } from '../src/store/ridesStore';
 
 type Tab = 'rides' | 'requests' | 'asks';
 
 const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; title: string }[] = [
   { id: 'rides',    label: 'Rides',       icon: 'steering',            title: 'Rides' },
-  { id: 'requests', label: 'My Requests', icon: 'human-handsup',       title: 'My Requests' },
+  { id: 'requests', label: 'Requests',    icon: 'human-handsup',       title: 'Requests' },
   { id: 'asks',     label: 'Asks',        icon: 'help-circle-outline', title: 'Asks' },
 ];
 
@@ -21,11 +26,20 @@ export default function HomeScreen() {
   const current = TABS.find((t) => t.id === activeTab)!;
   const { pois, syncPois } = usePoiStore();
   const { rides, loading: ridesLoading, error: ridesError, fetchRides } = useRidesStore();
+  const { loadIgnored } = useIgnoredRidesStore();
+  const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
+  const currentUserId = useAuthStore((s) => s.userId);
+  const { interests, loading: requestsLoading, error: requestsError, fetchRequests } = useRequestsStore();
 
   useFocusEffect(useCallback(() => {
     syncPois();
     fetchRides();
-  }, [syncPois, fetchRides]));
+    loadIgnored();
+    if (currentUserId) {
+      fetchMyInterests(currentUserId);
+      fetchRequests(currentUserId);
+    }
+  }, [syncPois, fetchRides, loadIgnored, fetchMyInterests, fetchRequests, currentUserId]));
 
   return (
     <SafeAreaView style={styles.root}>
@@ -71,7 +85,15 @@ export default function HomeScreen() {
             error={ridesError}
           />
         )}
-        {activeTab === 'requests' && <PlaceholderPage label="My Requests" />}
+        {activeTab === 'requests' && (
+          <RequestsScreen
+            interests={interests}
+            rides={rides}
+            pois={pois}
+            loading={requestsLoading}
+            error={requestsError}
+          />
+        )}
         {activeTab === 'asks'     && <PlaceholderPage label="Asks" />}
       </View>
 

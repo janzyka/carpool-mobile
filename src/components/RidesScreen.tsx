@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { Ride } from '../api/rides';
 import { Poi } from '../api/poi';
+import { Alert } from 'react-native';
+import { createRideInterest } from '../api/rides';
 import { useAuthStore } from '../store/authStore';
+import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
+import { useMyInterestsStore } from '../store/myInterestsStore';
 import { useRidesStore } from '../store/ridesStore';
 import SwipeableRideRow from './SwipeableRideRow';
 
@@ -79,6 +83,24 @@ export default function RidesScreen({ rides, pois, loading, error }: Props) {
   const poiMap = new Map(pois.map((p) => [p.id, p.name]));
   const currentUserId = useAuthStore((s) => s.userId);
   const deleteRide = useRidesStore((s) => s.deleteRide);
+  const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
+  const interestsByRideId = useMyInterestsStore((s) => s.byRideId);
+
+  const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
+
+  async function handleExpressInterest(rideId: number) {
+    try {
+      await createRideInterest(rideId);
+      if (currentUserId) fetchMyInterests(currentUserId);
+      Alert.alert('Requested', 'Your interest has been sent to the driver.');
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        Alert.alert('Already requested', 'You have already expressed interest in this ride.');
+      } else {
+        Alert.alert('Error', 'Could not send your request. Please try again.');
+      }
+    }
+  }
 
   // Re-render every 30 s so departure labels and the >5-min filter stay live.
   const [, setTick] = useState(0);
@@ -99,7 +121,7 @@ export default function RidesScreen({ rides, pois, loading, error }: Props) {
     return <View style={styles.center}><Text style={styles.emptyText}>No upcoming rides.</Text></View>;
   }
 
-  const sections = groupByDate(rides);
+  const sections = groupByDate(rides.filter((r) => !ignoredIds.has(r.id)));
 
   return (
     <SectionList
@@ -123,7 +145,10 @@ export default function RidesScreen({ rides, pois, loading, error }: Props) {
             toName={poiMap.get(item.leadsTo) ?? `POI ${item.leadsTo}`}
             timeLabel={text}
             isPast={isPast}
+            interestStatus={interestsByRideId.get(item.id)?.status}
             onDelete={deleteRide}
+            onIgnore={ignoreRide}
+            onExpressInterest={handleExpressInterest}
           />
         );
       }}

@@ -16,6 +16,38 @@ export interface SubmitRideResponse {
   message: string;
 }
 
+export interface CreateRideInterestResponse {
+  id: number;
+  rideId: number;
+  userId: number;
+  created: string;
+  updated: string;
+  message: string;
+}
+
+export async function respondToRideInterest(id: number, accepted: boolean): Promise<void> {
+  console.log(`[rides] respondToRideInterest → POST /ride-interests/${id}/response (accepted=${accepted})`);
+  try {
+    await apiClient.post(`/ride-interests/${id}/response`, { accepted });
+    console.log(`[rides] respondToRideInterest ← success`);
+  } catch (error: any) {
+    console.error('[rides] respondToRideInterest ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    throw error;
+  }
+}
+
+export async function createRideInterest(rideId: number): Promise<CreateRideInterestResponse> {
+  console.log(`[rides] createRideInterest → POST /ride-interests (rideId=${rideId})`);
+  try {
+    const { data } = await apiClient.post<CreateRideInterestResponse>('/ride-interests', { rideId });
+    console.log(`[rides] createRideInterest ← success (id=${data.id})`);
+    return data;
+  } catch (error: any) {
+    console.error('[rides] createRideInterest ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    throw error;
+  }
+}
+
 export async function deleteRide(id: number): Promise<void> {
   console.log(`[rides] deleteRide → DELETE /rides/${id}`);
   try {
