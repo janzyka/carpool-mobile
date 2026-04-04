@@ -17,14 +17,6 @@ import { useRequestsStore } from '../src/store/requestsStore';
 import { useRidesStore } from '../src/store/ridesStore';
 
 type Tab = 'rides' | 'requests' | 'asks';
-type RideFilter = 'all' | 'mine' | 'others';
-
-const FILTER_CYCLE: RideFilter[] = ['all', 'mine', 'others'];
-const FILTER_LABELS: Record<RideFilter, string> = {
-  all:    'All Rides',
-  mine:   'My Rides',
-  others: "Others' Rides",
-};
 
 const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; title: string }[] = [
   { id: 'rides',    label: 'Rides',       icon: 'steering',            title: 'Rides' },
@@ -35,20 +27,15 @@ const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof Material
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('rides');
   const [showAddRide, setShowAddRide] = useState(false);
-  const [rideFilter, setRideFilter] = useState<RideFilter>('all');
   const [dataReady, setDataReady] = useState(false);
   const hasLoaded = useRef(false);
   const current = TABS.find((t) => t.id === activeTab)!;
-
-  function cycleFilter() {
-    setRideFilter((f) => FILTER_CYCLE[(FILTER_CYCLE.indexOf(f) + 1) % FILTER_CYCLE.length]);
-  };
   const { pois, syncPois } = usePoiStore();
   const { rides, loading: ridesLoading, error: ridesError, fetchRides } = useRidesStore();
   const { loadIgnored } = useIgnoredRidesStore();
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
   const currentUserId = useAuthStore((s) => s.userId);
-  const { interests, loading: requestsLoading, error: requestsError, fetchRequests } = useRequestsStore();
+  const { fetchRequests } = useRequestsStore();
 
   useFocusEffect(useCallback(() => {
     const load = async () => {
@@ -89,19 +76,12 @@ export default function HomeScreen() {
             </Pressable>
           )}
           {activeTab === 'requests' && (
-            <Pressable onPress={() => currentUserId && fetchRequests(currentUserId)} disabled={requestsLoading} hitSlop={12}>
-              <MaterialCommunityIcons name="refresh" size={24} color={requestsLoading ? 'rgba(61,53,48,0.3)' : '#3D3530'} />
+            <Pressable onPress={fetchRides} disabled={ridesLoading} hitSlop={12}>
+              <MaterialCommunityIcons name="refresh" size={24} color={ridesLoading ? 'rgba(61,53,48,0.3)' : '#3D3530'} />
             </Pressable>
           )}
         </View>
-        {activeTab === 'rides' ? (
-          <Pressable style={styles.filterButton} onPress={cycleFilter} hitSlop={8}>
-            <MaterialCommunityIcons name="swap-vertical" size={18} color="rgba(61,53,48,0.6)" />
-            <Text style={styles.filterLabel}>{FILTER_LABELS[rideFilter]}</Text>
-          </Pressable>
-        ) : (
-          <Text style={styles.headerTitle}>{current.title}</Text>
-        )}
+        <Text style={styles.headerTitle}>{current.title}</Text>
         <View style={styles.headerSide}>
           {activeTab === 'rides' && (
             <Pressable onPress={() => setShowAddRide(true)} hitSlop={12}>
@@ -126,17 +106,16 @@ export default function HomeScreen() {
             pois={pois}
             loading={ridesLoading}
             error={ridesError}
-            filter={rideFilter}
             currentUserId={currentUserId}
           />
         )}
         {activeTab === 'requests' && (
           <RequestsScreen
-            interests={interests}
             rides={rides}
             pois={pois}
-            loading={requestsLoading}
-            error={requestsError}
+            loading={ridesLoading}
+            error={ridesError}
+            currentUserId={currentUserId}
           />
         )}
         {activeTab === 'asks'     && <PlaceholderPage label="Asks" />}
@@ -189,19 +168,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   headerSide: { width: 40 },
-  filterButton: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-  },
-  filterLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#3D3530',
-    letterSpacing: 0.2,
-  },
   headerTitle: {
     flex: 1,
     textAlign: 'center',

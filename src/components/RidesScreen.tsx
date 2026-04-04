@@ -1,94 +1,49 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
-import { Ride } from '../api/rides';
+import { ActivityIndicator, Alert, SectionList, StyleSheet, Text, View } from 'react-native';
+import { Ride, createRideInterest, respondToRideInterest } from '../api/rides';
 import { Poi } from '../api/poi';
-import { Alert } from 'react-native';
-import { createRideInterest } from '../api/rides';
 import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
 import { useMyInterestsStore } from '../store/myInterestsStore';
+import { useRequestsStore } from '../store/requestsStore';
 import { useRidesStore } from '../store/ridesStore';
+import { useAuthStore } from '../store/authStore';
 import SwipeableRideRow from './SwipeableRideRow';
-
-type RideFilter = 'all' | 'mine' | 'others';
+import SwipeableRequestRow from './SwipeableRequestRow';
+import { parseDeparture, formatTime, groupByDate } from '../utils/rideUtils';
 
 interface Props {
   rides: Ride[];
   pois: Poi[];
   loading: boolean;
   error: string | null;
-  filter: RideFilter;
   currentUserId: number | null;
 }
 
-// Server returns naive local datetime "2024-06-01T08:00:00" — parse as local time.
-function parseDeparture(s: string): Date {
-  return new Date(s.replace('T', ' '));
-}
 
-// Returns a stable YYYY-MM-DD key for grouping (in local time).
-function dateKey(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
 
-function sectionTitle(key: string): string {
-  const now = new Date();
-  if (key === dateKey(now)) return 'Today';
-  // Parse the key back as local noon to avoid DST edge cases.
-  const d = new Date(`${key}T12:00:00`);
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
-const PAST_HIDE_MINUTES = 5;
-
-interface TimeLabel {
-  text: string;
-  isPast: boolean;
-}
-
-function formatTime(departure: Date): TimeLabel {
-  const minutes = (departure.getTime() - Date.now()) / 60_000; // negative when past
-  if (minutes < 0) {
-    const ago = Math.round(-minutes);
-    return { text: `${ago} min ago`, isPast: true };
-  }
-  if (minutes <= 60) {
-    return { text: `In ${Math.round(minutes)} min`, isPast: false };
-  }
-  return {
-    text: departure.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
-    isPast: false,
-  };
-}
-
-interface Section {
-  title: string;
-  data: Ride[];
-}
-
-function groupByDate(rides: Ride[]): Section[] {
-  const map = new Map<string, Ride[]>();
-  for (const ride of rides) {
-    const dep = parseDeparture(ride.departure);
-    const minutesPast = (Date.now() - dep.getTime()) / 60_000;
-    if (minutesPast > PAST_HIDE_MINUTES) continue;   // silently drop from view
-    const key = dateKey(dep);
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(ride);
-  }
-  return Array.from(map.entries()).map(([key, data]) => ({
-    title: sectionTitle(key),
-    data,
-  }));
-}
-
-export default function RidesScreen({ rides, pois, loading, error, filter, currentUserId }: Props) {
+export default function RidesScreen({ rides, pois, loading, error, currentUserId }: Props) {
   const poiMap = new Map(pois.map((p) => [p.id, p.name]));
   const deleteRide = useRidesStore((s) => s.deleteRide);
   const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
   const interestsByRideId = useMyInterestsStore((s) => s.byRideId);
-
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
+  const { interests, fetchRequests } = useRequestsStore();
+  const authUserId = useAuthStore((s) => s.userId);
+
+  const [expandedRideId, setExpandedRideId] = useState<number | null>(null);
+
+  function toggleExpand(rideId: number) {
+    setExpandedRideId((prev) => (prev === rideId ? null : rideId));
+  }
+
+  async function handleRespond(interestId: number, accepted: boolean) {
+    try {
+      await respondToRideInterest(interestId, accepted);
+      if (authUserId) fetchRequests(authUserId);
+    } catch {
+      Alert.alert('Error', 'Could not update the request. Please try again.');
+    }
+  }
 
   async function handleExpressInterest(rideId: number) {
     try {
@@ -125,11 +80,7 @@ export default function RidesScreen({ rides, pois, loading, error, filter, curre
 
   const filteredRides = rides
     .filter((r) => !ignoredIds.has(r.id))
-    .filter((r) => {
-      if (filter === 'mine')   return r.userId === currentUserId;
-      if (filter === 'others') return r.userId !== currentUserId;
-      return true;
-    });
+    .filter((r) => r.userId === currentUserId);
 
   const sections = groupByDate(filteredRides);
 
@@ -148,19 +99,47 @@ export default function RidesScreen({ rides, pois, loading, error, filter, curre
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       renderItem={({ item }) => {
         const { text, isPast } = formatTime(parseDeparture(item.departure));
+        const isExpanded = expandedRideId === item.id;
+        const fromName = poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`;
+        const toName   = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
+        const rideInterests = interests.filter((i) => i.rideId === item.id);
         return (
-          <SwipeableRideRow
-            ride={item}
-            isOwner={item.userId === currentUserId}
-            fromName={poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`}
-            toName={poiMap.get(item.leadsTo) ?? `POI ${item.leadsTo}`}
-            timeLabel={text}
-            isPast={isPast}
-            interestStatus={interestsByRideId.get(item.id)?.status}
-            onDelete={deleteRide}
-            onIgnore={ignoreRide}
-            onExpressInterest={handleExpressInterest}
-          />
+          <View>
+            <SwipeableRideRow
+              ride={item}
+              isOwner={item.userId === currentUserId}
+              fromName={fromName}
+              toName={toName}
+              timeLabel={text}
+              isPast={isPast}
+              interestStatus={interestsByRideId.get(item.id)?.status}
+              onDelete={deleteRide}
+              onIgnore={ignoreRide}
+              onExpressInterest={handleExpressInterest}
+              onPress={() => toggleExpand(item.id)}
+            />
+            {isExpanded && (
+              <View style={styles.detailPanel}>
+                {rideInterests.length === 0 ? (
+                  <View style={styles.noInterests}>
+                    <Text style={styles.noInterestsText}>No interests yet.</Text>
+                  </View>
+                ) : (
+                  rideInterests.map((interest, idx) => (
+                    <View key={interest.id}>
+                      {idx > 0 && <View style={styles.interestSeparator} />}
+                      <SwipeableRequestRow
+                        interest={interest}
+                        compact
+                        onAccept={(id) => handleRespond(id, true)}
+                        onDecline={(id) => handleRespond(id, false)}
+                      />
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
+          </View>
         );
       }}
     />
@@ -184,4 +163,17 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' },
 
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E7EB', marginHorizontal: 16 },
+
+  detailPanel: {
+    backgroundColor: '#E9EAEC',
+    borderLeftWidth: 4,
+    borderLeftColor: '#68D391',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#D1D5DB',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#D1D5DB',
+  },
+  noInterests: { paddingVertical: 14, alignItems: 'center' },
+  noInterestsText: { fontSize: 14, color: '#9CA3AF' },
+  interestSeparator: { height: StyleSheet.hairlineWidth, backgroundColor: '#D1D5DB', marginHorizontal: 16 },
 });

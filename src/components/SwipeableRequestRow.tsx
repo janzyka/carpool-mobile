@@ -4,11 +4,13 @@ import UserAvatar from './UserAvatar';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { IncomingInterest } from '../store/requestsStore';
+import { useUserCacheStore } from '../store/userCacheStore';
 
 interface Props {
   interest: IncomingInterest;
-  fromName: string;
-  toName: string;
+  fromName?: string;
+  toName?: string;
+  compact?: boolean;
   onAccept: (id: number) => void;
   onDecline: (id: number) => void;
 }
@@ -19,8 +21,9 @@ const STATUS_LABEL: Record<number, { label: string; color: string }> = {
   2: { label: 'Declined', color: '#EF4444' },
 };
 
-export default function SwipeableRequestRow({ interest, fromName, toName, onAccept, onDecline }: Props) {
+export default function SwipeableRequestRow({ interest, fromName, toName, compact, onAccept, onDecline }: Props) {
   const swipeRef = useRef<Swipeable>(null);
+  const cachedUser = useUserCacheStore((s) => s.cache.get(interest.userId));
 
   function close() { swipeRef.current?.close(); }
 
@@ -58,16 +61,25 @@ export default function SwipeableRequestRow({ interest, fromName, toName, onAcce
       overshootLeft={false}
       overshootRight={false}
     >
-      <View style={styles.row}>
-        <UserAvatar userId={interest.userId} size={40} />
-        <View style={styles.info}>
-          <View style={styles.route}>
-            <Text style={styles.poi} numberOfLines={1}>{fromName}</Text>
-            <Text style={styles.arrow}>→</Text>
-            <Text style={styles.poi} numberOfLines={1}>{toName}</Text>
+      <View style={[styles.row, compact && styles.rowCompact]}>
+        <UserAvatar userId={interest.userId} size={compact ? 34 : 40} />
+        {compact ? (
+          <>
+            <Text style={styles.userName} numberOfLines={1}>
+              {cachedUser?.name ?? '…'}
+            </Text>
+            <Text style={[styles.statusBadge, { color: status.color }]}>{status.label}</Text>
+          </>
+        ) : (
+          <View style={styles.info}>
+            <View style={styles.route}>
+              <Text style={styles.poi} numberOfLines={1}>{fromName}</Text>
+              <Text style={styles.arrow}>→</Text>
+              <Text style={styles.poi} numberOfLines={1}>{toName}</Text>
+            </View>
+            <Text style={[styles.status, { color: status.color }]}>{status.label}</Text>
           </View>
-          <Text style={[styles.status, { color: status.color }]}>{status.label}</Text>
-        </View>
+        )}
       </View>
     </Swipeable>
   );
@@ -106,9 +118,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: 'rgba(255,255,255,0.9)',
   },
+  rowCompact: {
+    paddingLeft: 28,
+    paddingVertical: 9,
+    backgroundColor: 'transparent',
+  },
   info: { flex: 1, marginLeft: 12 },
   route: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   poi:   { fontSize: 15, color: '#111827', fontWeight: '500', flexShrink: 1 },
   arrow: { fontSize: 14, color: '#9CA3AF' },
   status: { fontSize: 12, fontWeight: '600', marginTop: 3 },
+  userName: { flex: 1, fontSize: 14, color: '#111827', fontWeight: '500', marginLeft: 10 },
+  statusBadge: { fontSize: 12, fontWeight: '600' },
 });

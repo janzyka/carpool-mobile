@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRef } from 'react';
 import UserAvatar from './UserAvatar';
-import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ride } from '../api/rides';
 
@@ -16,6 +16,7 @@ interface Props {
   onDelete: (id: number) => void;
   onIgnore: (id: number) => void;
   onExpressInterest: (id: number) => void;
+  onPress?: () => void;
 }
 
 const INTEREST_ICONS: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string }> = {
@@ -25,7 +26,7 @@ const INTEREST_ICONS: Record<number, { name: React.ComponentProps<typeof Materia
 };
 
 export default function SwipeableRideRow({
-  ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, onDelete, onIgnore, onExpressInterest,
+  ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, onDelete, onIgnore, onExpressInterest, onPress,
 }: Props) {
   const swipeRef = useRef<Swipeable>(null);
 
@@ -81,26 +82,29 @@ export default function SwipeableRideRow({
   }
 
   const rowContent = (
-    <View style={styles.row}>
-      <View style={styles.avatarWrapper}>
-        <UserAvatar userId={ride.userId} size={40} />
-        {isOwner && (
-          <MaterialCommunityIcons name="heart" size={12} color="#EF4444" style={styles.badge} />
-        )}
-        {!isOwner && interestStatus !== undefined && (() => {
-          const icon = INTEREST_ICONS[interestStatus];
-          return icon
-            ? <MaterialCommunityIcons name={icon.name} size={14} color={icon.color} style={styles.badge} />
-            : null;
-        })()}
-      </View>
+    <Pressable style={styles.row} onPress={onPress}>
+      {isOwner ? (
+        <View style={styles.vehicleIcon}>
+          <MaterialCommunityIcons name="car-side" size={24} color="#fff" />
+        </View>
+      ) : (
+        <View style={styles.avatarWrapper}>
+          <UserAvatar userId={ride.userId} size={40} />
+          {interestStatus !== undefined && (() => {
+            const icon = INTEREST_ICONS[interestStatus];
+            return icon
+              ? <MaterialCommunityIcons name={icon.name} size={14} color={icon.color} style={styles.badge} />
+              : null;
+          })()}
+        </View>
+      )}
       <View style={styles.route}>
         <Text style={styles.poi} numberOfLines={1}>{fromName}</Text>
         <Text style={styles.arrow}>→</Text>
         <Text style={styles.poi} numberOfLines={1}>{toName}</Text>
       </View>
       <Text style={[styles.time, isPast && styles.timePast]}>{timeLabel}</Text>
-    </View>
+    </Pressable>
   );
 
   return (
@@ -131,6 +135,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     marginRight: 12,
+  },
+  vehicleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#68D391',
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   route: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 6, marginRight: 12 },
   poi: { fontSize: 15, color: '#111827', fontWeight: '500', flexShrink: 1 },
