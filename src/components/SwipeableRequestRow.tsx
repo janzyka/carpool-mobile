@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
   info: { flex: 1, marginLeft: 12 },
   route: { flexDirection: 'row', alignItems: 'center', gap: 6 },

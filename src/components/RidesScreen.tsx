@@ -4,17 +4,20 @@ import { Ride } from '../api/rides';
 import { Poi } from '../api/poi';
 import { Alert } from 'react-native';
 import { createRideInterest } from '../api/rides';
-import { useAuthStore } from '../store/authStore';
 import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
 import { useMyInterestsStore } from '../store/myInterestsStore';
 import { useRidesStore } from '../store/ridesStore';
 import SwipeableRideRow from './SwipeableRideRow';
+
+type RideFilter = 'all' | 'mine' | 'others';
 
 interface Props {
   rides: Ride[];
   pois: Poi[];
   loading: boolean;
   error: string | null;
+  filter: RideFilter;
+  currentUserId: number | null;
 }
 
 // Server returns naive local datetime "2024-06-01T08:00:00" — parse as local time.
@@ -79,9 +82,8 @@ function groupByDate(rides: Ride[]): Section[] {
   }));
 }
 
-export default function RidesScreen({ rides, pois, loading, error }: Props) {
+export default function RidesScreen({ rides, pois, loading, error, filter, currentUserId }: Props) {
   const poiMap = new Map(pois.map((p) => [p.id, p.name]));
-  const currentUserId = useAuthStore((s) => s.userId);
   const deleteRide = useRidesStore((s) => s.deleteRide);
   const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
   const interestsByRideId = useMyInterestsStore((s) => s.byRideId);
@@ -121,12 +123,21 @@ export default function RidesScreen({ rides, pois, loading, error }: Props) {
     return <View style={styles.center}><Text style={styles.emptyText}>No upcoming rides.</Text></View>;
   }
 
-  const sections = groupByDate(rides.filter((r) => !ignoredIds.has(r.id)));
+  const filteredRides = rides
+    .filter((r) => !ignoredIds.has(r.id))
+    .filter((r) => {
+      if (filter === 'mine')   return r.userId === currentUserId;
+      if (filter === 'others') return r.userId !== currentUserId;
+      return true;
+    });
+
+  const sections = groupByDate(filteredRides);
 
   return (
     <SectionList
       sections={sections}
       keyExtractor={(r) => String(r.id)}
+      style={{ backgroundColor: 'transparent' }}
       contentContainerStyle={styles.list}
       stickySectionHeadersEnabled
       renderSectionHeader={({ section }) => (
@@ -164,7 +175,7 @@ const styles = StyleSheet.create({
   list: { paddingBottom: 16 },
 
   sectionHeader: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(243,244,246,0.88)',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
