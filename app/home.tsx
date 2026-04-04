@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const bgImage = require('../assets/background.png');
@@ -67,7 +67,12 @@ export default function HomeScreen() {
           console.log('[push] permission denied');
           return;
         }
-        const token = await Notifications.getExpoPushTokenAsync();
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        if (!projectId) {
+          console.warn('[push] missing projectId in app config');
+          return;
+        }
+        const token = await Notifications.getExpoPushTokenAsync({ projectId });
         console.log('[push] token:', token.data);
         await patchUser(currentUserId, { pushToken: token.data });
       } catch (e) {
@@ -76,22 +81,47 @@ export default function HomeScreen() {
     })();
   }, [currentUserId]);
 
-  // Foreground notification listener — trigger the relevant pull.
+  function handleNotificationData(data: { type?: string }) {
+    console.log('[push] handling:', data);
+    if (data?.type === 'new_ride') {
+      fetchRides();
+      if (currentUserId) fetchMyInterests(currentUserId);
+    } else if (data?.type === 'new_interest' && currentUserId) {
+      fetchRequests(currentUserId);
+    } else if (data?.type === 'interest_response' && currentUserId) {
+      fetchMyInterests(currentUserId);
+    }
+  }
+
+  // Foreground: notification arrives while app is open.
   useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener((notification) => {
-      const data = notification.request.content.data as { type?: string };
-      console.log('[push] received:', data);
-      if (data?.type === 'new_ride') {
+    const sub = Notifications.addNotificationReceivedListener((notification) => {
+      handleNotificationData(notification.request.content.data as { type?: string });
+    });
+    return () => sub.remove();
+  }, [currentUserId, fetchRequests, fetchMyInterests, fetchRides]);
+
+  // Background → foreground via notification tap.
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      handleNotificationData(response.notification.request.content.data as { type?: string });
+    });
+    return () => sub.remove();
+  }, [currentUserId, fetchRequests, fetchMyInterests, fetchRides]);
+
+  // Background → foreground without tapping notification (user switches back manually).
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
         fetchRides();
-        if (currentUserId) fetchMyInterests(currentUserId);
-      } else if (data?.type === 'new_interest' && currentUserId) {
-        fetchRequests(currentUserId);
-      } else if (data?.type === 'interest_response' && currentUserId) {
-        fetchMyInterests(currentUserId);
+        if (currentUserId) {
+          fetchMyInterests(currentUserId);
+          fetchRequests(currentUserId);
+        }
       }
     });
-    return () => subscription.remove();
-  }, [currentUserId, fetchRequests, fetchMyInterests]);
+    return () => sub.remove();
+  }, [currentUserId, fetchRequests, fetchMyInterests, fetchRides]);
 
   useFocusEffect(useCallback(() => {
     const load = async () => {

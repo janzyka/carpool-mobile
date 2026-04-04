@@ -14,9 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.zykyc.carpool",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.zykyc.carpool",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -31,6 +37,14 @@
       "expo-router",
       "expo-secure-store",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "apiUrl": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev",
+      "router": {},
+      "eas": {
+        "projectId": "ace7f8d3-7406-4001-b0b6-4afbfd53ba26"
+      }
+    },
+    "owner": "zykyc"
   }
 }
