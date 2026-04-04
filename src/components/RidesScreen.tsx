@@ -103,6 +103,11 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
         const fromName = poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`;
         const toName   = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
         const rideInterests = interests.filter((i) => i.rideId === item.id);
+        const interestCounts = {
+          pending:  rideInterests.filter((i) => i.status === 0).length,
+          accepted: rideInterests.filter((i) => i.status === 1).length,
+          declined: rideInterests.filter((i) => i.status === 2).length,
+        };
         return (
           <View>
             <SwipeableRideRow
@@ -113,6 +118,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
               timeLabel={text}
               isPast={isPast}
               interestStatus={interestsByRideId.get(item.id)?.status}
+              interestCounts={interestCounts}
               onDelete={deleteRide}
               onIgnore={ignoreRide}
               onExpressInterest={handleExpressInterest}

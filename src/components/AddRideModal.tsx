@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { submitRide } from '../api/rides';
 import { Poi } from '../api/poi';
+import { useVehiclesStore } from '../store/vehiclesStore';
 
 interface Props {
   visible: boolean;
@@ -31,6 +32,10 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const vehicles = useVehiclesStore((s) => s.vehicles);
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleDto | null>(null);
+  const [showVehiclePicker, setShowVehiclePicker] = useState(false);
+
   function reset() {
     setFrom(null);
     setTo(null);
@@ -38,6 +43,7 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
     setPickerTarget(null);
     setShowDatePicker(false);
     setSubmitting(false);
+    setSelectedVehicle(null);
   }
 
   function handleClose() { reset(); onClose(); }
@@ -46,9 +52,10 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
     if (!from) { Alert.alert('Missing field', 'Please select a departure location.'); return; }
     if (!to)   { Alert.alert('Missing field', 'Please select a destination.'); return; }
     if (from.id === to.id) { Alert.alert('Invalid', 'Departure and destination must differ.'); return; }
+    if (departure <= new Date()) { Alert.alert('Invalid time', 'Departure must be in the future.'); return; }
     setSubmitting(true);
     try {
-      await submitRide(from.id, to.id, departure);
+      await submitRide(from.id, to.id, departure, selectedVehicle?.id);
       reset();
       onCreated();
     } catch {
@@ -110,15 +117,57 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
           </Pressable>
         </View>
 
+        {/* Vehicle — only shown when user has at least one */}
+        {vehicles.length > 0 && (
+          <>
+            <Text style={styles.label}>Vehicle</Text>
+            <Pressable style={styles.selector} onPress={() => setShowVehiclePicker(true)}>
+              <Text style={selectedVehicle ? styles.selectorValue : styles.selectorPlaceholder}>
+                {selectedVehicle ? selectedVehicle.name : 'Select vehicle (optional)…'}
+              </Text>
+            </Pressable>
+          </>
+        )}
+
         {showDatePicker && (
           <DateTimePicker
             value={departure}
             mode={dateMode}
             display="spinner"
-            onChange={(_, date) => { setShowDatePicker(false); if (date) setDeparture(date); }}
+            minimumDate={new Date()}
+            onChange={(_, date) => {
+              setShowDatePicker(false);
+              if (!date) return;
+              const now = new Date();
+              setDeparture(date <= now ? new Date(now.getTime() + 15 * 60 * 1000) : date);
+            }}
           />
         )}
       </View>
+
+      {/* Vehicle picker sheet */}
+      {showVehiclePicker && (
+        <Modal visible animationType="slide" transparent onRequestClose={() => setShowVehiclePicker(false)}>
+          <TouchableWithoutFeedback onPress={() => setShowVehiclePicker(false)}>
+            <View style={styles.backdrop} />
+          </TouchableWithoutFeedback>
+          <View style={styles.poiSheet}>
+            <Text style={styles.poiSheetTitle}>Select vehicle</Text>
+            <FlatList
+              data={[{ id: -1, name: 'None' } as any, ...vehicles]}
+              keyExtractor={(v) => String(v.id)}
+              renderItem={({ item }) => (
+                <Pressable style={styles.poiRow} onPress={() => {
+                  setSelectedVehicle(item.id === -1 ? null : item);
+                  setShowVehiclePicker(false);
+                }}>
+                  <Text style={styles.poiName}>{item.name}</Text>
+                </Pressable>
+              )}
+            />
+          </View>
+        </Modal>
+      )}
 
       {/* POI picker sheet */}
       {pickerTarget !== null && (

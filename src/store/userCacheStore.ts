@@ -7,6 +7,7 @@ interface UserCacheState {
   fetching: Set<number>;
   getUser: (id: number) => UserSummary | undefined;
   ensureUser: (id: number) => Promise<void>;
+  refreshUser: (id: number) => Promise<void>;
 }
 
 export const useUserCacheStore = create<UserCacheState>((set, get) => ({
@@ -14,6 +15,19 @@ export const useUserCacheStore = create<UserCacheState>((set, get) => ({
   fetching: new Set(),
 
   getUser: (id: number) => get().cache.get(id),
+
+  refreshUser: async (id: number) => {
+    try {
+      const user = await fetchUser(id);
+      set((s) => {
+        const nextCache = new Map(s.cache);
+        nextCache.set(id, user);
+        return { cache: nextCache };
+      });
+    } catch {
+      // best-effort — leave stale cache in place
+    }
+  },
 
   ensureUser: async (id: number) => {
     const { cache, fetching } = get();

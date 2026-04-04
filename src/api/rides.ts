@@ -7,6 +7,7 @@ export interface Ride {
   leadsTo: number;
   departure: string;   // local datetime string: "2024-06-01T08:00:00"
   status: number;
+  vehicleId: number | null;
   created: string;
 }
 
@@ -76,6 +77,7 @@ export async function submitRide(
   departsFrom: number,
   leadsTo: number,
   departure: Date,
+  vehicleId?: number,
 ): Promise<SubmitRideResponse> {
   // Format as local ISO-8601 without timezone offset ("2024-06-01T08:00:00")
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -86,6 +88,7 @@ export async function submitRide(
     departsFrom,
     leadsTo,
     departure: departureStr,
+    ...(vehicleId !== undefined ? { vehicleId } : {}),
   });
   return data;
 }
