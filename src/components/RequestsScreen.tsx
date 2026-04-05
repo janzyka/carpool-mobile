@@ -82,6 +82,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
   return (
     <SectionList
       sections={sections}
+      extraData={interestsByRideId}
       keyExtractor={(r) => String(r.id)}
       style={{ backgroundColor: 'transparent' }}
       contentContainerStyle={styles.list}

@@ -97,6 +97,96 @@ If `google-services.json` is ever regenerated (e.g. after rotating keys), downlo
 
 EAS manages APNs keys automatically during the first iOS build. No additional files need to be committed.
 
+---
+
+### Push notification setup checklist (per environment)
+
+Follow these steps in order for each environment (dev, prod). Steps 1–2 are one-time per Firebase project. Steps 3–5 must be repeated per environment.
+
+#### 1. Firebase — register Android app
+
+Already done for dev. For a new environment (e.g. prod with a different package name):
+
+- Go to [Firebase Console](https://console.firebase.google.com/project/carpool-8efc7) → Project Settings → **Your apps** → Add app → Android
+- Package name: `com.zykyc.carpool` (same for dev and prod unless you use separate package names)
+- Download `google-services.json` and place it in the project root
+- Rebuild the native client (`eas build`)
+
+#### 2. Upload FCM V1 credentials to Expo
+
+Expo's push relay needs a Firebase service account key to deliver to Android devices via FCM V1:
+
+1. [Firebase Console](https://console.firebase.google.com/project/carpool-8efc7) → Project Settings → **Service accounts** tab
+2. Click **Generate new private key** → download the JSON file
+3. Upload to Expo:
+```bash
+eas credentials --platform android
+```
+Select: your app → **FCM V1 service account key** → upload the downloaded JSON
+
+> Without this step Expo returns `{"status":"error","details":{"error":"InvalidCredentials"}}` and no notification is delivered.
+
+#### 3. AWS — deploy the backend stack
+
+The backend requires a `send-push-notification` Lambda (no VPC — has direct internet access) and a Lambda VPC Interface Endpoint so VPC-bound Lambdas can invoke it without a NAT Gateway:
+
+```bash
+# From the carpool backend repo root:
+aws cloudformation deploy \
+  --stack-name carpool-<env> \
+  --template-file src/main/resources/aws/cloudformation.yaml \
+  --parameter-overrides \
+      Environment=<env> \
+      LambdaS3Bucket=<bucket> \
+      LambdaS3Key=carpool-1.0-SNAPSHOT.jar \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+Key CloudFormation resources for push:
+- `SendPushNotificationLambda` — no VPC, calls Expo API directly
+- `LambdaVpcEndpoint` — VPC Interface Endpoint (`com.amazonaws.<region>.lambda`) — allows VPC Lambdas to invoke `send-push-notification` over the AWS private network (~$7/month, no NAT Gateway needed)
+- `LambdaEndpointSecurityGroup` — allows HTTPS (443) from `LambdaSecurityGroup` to the endpoint
+- `PUSH_LAMBDA_NAME` env var — set on `submit-ride`, `respond-to-ride-interest`, `create-ride-interest`
+
+#### 4. Verify end-to-end delivery
+
+After deploying, send a direct test push via curl to confirm FCM credentials and token are working:
+
+```bash
+curl -s -X POST https://exp.host/--/api/v2/push/send \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "to": "<ExponentPushToken of test user>",
+    "title": "Test",
+    "body": "Push test",
+    "data": {"type": "interest_response"}
+  }'
+```
+
+Expected response: `{"data":{"status":"ok","id":"..."}}`.
+If you see `InvalidCredentials` repeat step 2. If you see `DeviceNotRegistered` the user needs to relaunch the app to re-register their token.
+
+#### 5. Verify Lambda pipeline
+
+Check CloudWatch logs after triggering a push-generating action (e.g. accept/decline an interest):
+
+```bash
+# Caller Lambda — should show: [push] async invoke dispatched to carpool-<env>-send-push-notification
+aws logs filter-log-events \
+  --log-group-name /aws/lambda/carpool-<env>-respond-to-ride-interest \
+  --start-time $(python3 -c "import time; print(int((time.time()-300)*1000))") \
+  --query "events[*].message" --output text
+
+# Push Lambda — should show: [push] HTTP 200 → {"data":{"status":"ok",...}}
+aws logs filter-log-events \
+  --log-group-name /aws/lambda/carpool-<env>-send-push-notification \
+  --start-time $(python3 -c "import time; print(int((time.time()-300)*1000))") \
+  --query "events[*].message" --output text
+```
+
+---
+
 ### How notifications trigger data refresh
 
 | Event | Notification type | App action |

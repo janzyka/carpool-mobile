@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import UserAvatar from './UserAvatar';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { IncomingInterest } from '../store/requestsStore';
 import { useUserCacheStore } from '../store/userCacheStore';
@@ -11,9 +11,42 @@ interface Props {
   fromName?: string;
   toName?: string;
   compact?: boolean;
+  isLoading?: boolean;
   onAccept: (id: number) => void;
   onDecline: (id: number) => void;
 }
+
+function JumpingDots({ color }: { color: string }) {
+  const dots = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
+
+  useEffect(() => {
+    const animations = dots.map((dot, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 120),
+          Animated.timing(dot, { toValue: -5, duration: 200, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0,  duration: 200, useNativeDriver: true }),
+          Animated.delay((dots.length - i) * 120),
+        ])
+      )
+    );
+    animations.forEach((a) => a.start());
+    return () => animations.forEach((a) => a.stop());
+  }, []);
+
+  return (
+    <View style={dotStyles.row}>
+      {dots.map((dot, i) => (
+        <Animated.View key={i} style={[dotStyles.dot, { backgroundColor: color, transform: [{ translateY: dot }] }]} />
+      ))}
+    </View>
+  );
+}
+
+const dotStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+});
 
 const STATUS_LABEL: Record<number, { label: string; color: string }> = {
   0: { label: 'Pending',  color: '#9CA3AF' },
@@ -21,7 +54,7 @@ const STATUS_LABEL: Record<number, { label: string; color: string }> = {
   2: { label: 'Declined', color: '#EF4444' },
 };
 
-export default function SwipeableRequestRow({ interest, fromName, toName, compact, onAccept, onDecline }: Props) {
+export default function SwipeableRequestRow({ interest, fromName, toName, compact, isLoading, onAccept, onDecline }: Props) {
   const swipeRef = useRef<Swipeable>(null);
   const cachedUser = useUserCacheStore((s) => s.cache.get(interest.userId));
 
@@ -65,10 +98,38 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
         <UserAvatar userId={interest.userId} size={compact ? 34 : 40} />
         {compact ? (
           <>
-            <Text style={styles.userName} numberOfLines={1}>
-              {cachedUser?.name ?? '…'}
-            </Text>
-            <Text style={[styles.statusBadge, { color: status.color }]}>{status.label}</Text>
+            <View style={styles.nameBlock}>
+              <View style={styles.nameRow}>
+                <Text style={styles.userName} numberOfLines={1}>{cachedUser?.name ?? '…'}</Text>
+                {isLoading
+                  ? <JumpingDots color={status.color} />
+                  : <Text style={[styles.statusBadge, { color: status.color }]}>{status.label}</Text>}
+              </View>
+              <View style={styles.contactRow}>
+                <Pressable
+                  style={styles.contactBtn}
+                  onPress={() => {
+                    const phone = cachedUser?.phoneNumber;
+                    if (phone) Linking.openURL(`tel:${phone}`);
+                    else Alert.alert('No phone number', 'This user has not provided a phone number.');
+                  }}
+                >
+                  <MaterialCommunityIcons name="phone" size={16} color="#2563EB" />
+                  <Text style={styles.contactLabel}>Call</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.contactBtn}
+                  onPress={() => {
+                    const phone = cachedUser?.phoneNumber?.replace(/\D/g, '');
+                    if (phone) Linking.openURL(`https://wa.me/${phone}`);
+                    else Alert.alert('No phone number', 'This user has not provided a phone number.');
+                  }}
+                >
+                  <MaterialCommunityIcons name="whatsapp" size={16} color="#25D366" />
+                  <Text style={styles.contactLabel}>WhatsApp</Text>
+                </Pressable>
+              </View>
+            </View>
           </>
         ) : (
           <View style={styles.info}>
@@ -77,7 +138,9 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
               <Text style={styles.arrow}>→</Text>
               <Text style={styles.poi} numberOfLines={1}>{toName}</Text>
             </View>
-            <Text style={[styles.status, { color: status.color }]}>{status.label}</Text>
+            {isLoading
+              ? <JumpingDots color={status.color} />
+              : <Text style={[styles.status, { color: status.color }]}>{status.label}</Text>}
           </View>
         )}
       </View>
@@ -128,6 +191,11 @@ const styles = StyleSheet.create({
   poi:   { fontSize: 15, color: '#111827', fontWeight: '500', flexShrink: 1 },
   arrow: { fontSize: 14, color: '#9CA3AF' },
   status: { fontSize: 12, fontWeight: '600', marginTop: 3 },
-  userName: { flex: 1, fontSize: 14, color: '#111827', fontWeight: '500', marginLeft: 10 },
-  statusBadge: { fontSize: 12, fontWeight: '600' },
+  nameBlock: { flex: 1, marginLeft: 10 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  userName: { fontSize: 14, color: '#111827', fontWeight: '500', flexShrink: 1 },
+  contactRow: { flexDirection: 'row', gap: 8, marginTop: 5 },
+  contactBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4, paddingHorizontal: 10, backgroundColor: '#fff', borderRadius: 20, borderWidth: 1, borderColor: '#E5E7EB' },
+  contactLabel: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  statusBadge: { fontSize: 14, fontWeight: '700' },
 });

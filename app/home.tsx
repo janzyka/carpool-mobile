@@ -16,7 +16,8 @@ const IS_EXPO_GO = Constants.executionEnvironment === 'storeClient';
 // Show notifications as banners while the app is in the foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -96,6 +97,7 @@ export default function HomeScreen() {
   // Foreground: notification arrives while app is open.
   useEffect(() => {
     const sub = Notifications.addNotificationReceivedListener((notification) => {
+      console.log('[push] foreground notification received:', JSON.stringify(notification.request.content));
       handleNotificationData(notification.request.content.data as { type?: string });
     });
     return () => sub.remove();
@@ -104,6 +106,7 @@ export default function HomeScreen() {
   // Background → foreground via notification tap.
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log('[push] notification tapped from background:', JSON.stringify(response.notification.request.content));
       handleNotificationData(response.notification.request.content.data as { type?: string });
     });
     return () => sub.remove();

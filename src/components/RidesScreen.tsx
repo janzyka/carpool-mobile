@@ -31,17 +31,21 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
   const authUserId = useAuthStore((s) => s.userId);
 
   const [expandedRideId, setExpandedRideId] = useState<number | null>(null);
+  const [loadingInterestIds, setLoadingInterestIds] = useState<Set<number>>(new Set());
 
   function toggleExpand(rideId: number) {
     setExpandedRideId((prev) => (prev === rideId ? null : rideId));
   }
 
   async function handleRespond(interestId: number, accepted: boolean) {
+    setLoadingInterestIds((prev) => new Set([...prev, interestId]));
     try {
       await respondToRideInterest(interestId, accepted);
       if (authUserId) fetchRequests(authUserId);
     } catch {
       Alert.alert('Error', 'Could not update the request. Please try again.');
+    } finally {
+      setLoadingInterestIds((prev) => { const next = new Set(prev); next.delete(interestId); return next; });
     }
   }
 
@@ -137,6 +141,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
                       <SwipeableRequestRow
                         interest={interest}
                         compact
+                        isLoading={loadingInterestIds.has(interest.id)}
                         onAccept={(id) => handleRespond(id, true)}
                         onDecline={(id) => handleRespond(id, false)}
                       />
