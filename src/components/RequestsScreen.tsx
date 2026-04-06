@@ -9,6 +9,7 @@ import { useRidesStore } from '../store/ridesStore';
 import { useUserCacheStore } from '../store/userCacheStore';
 import { useVehiclesStore } from '../store/vehiclesStore';
 import SwipeableRideRow from './SwipeableRideRow';
+import { useTranslation } from 'react-i18next';
 import { parseDeparture, formatTime, groupByDate, resolveInterestDisplayStatus } from '../utils/rideUtils';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 export default function RequestsScreen({ rides, pois, loading, error, currentUserId, showAll, onRefresh }: Props) {
   const poiMap   = new Map(pois.map((p) => [p.id, p.name]));
   const poiById  = new Map(pois.map((p) => [p.id, p]));
+  const { t } = useTranslation();
   const { ignoredIds, ignoreRide, unignoreRide } = useIgnoredRidesStore();
   const interestsByRideId = useMyInterestsStore((s) => s.byRideId);
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
@@ -57,7 +59,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
       setExpandedRideId(null);
       if (currentUserId) fetchMyInterests(currentUserId);
     } catch (error: any) {
-      Alert.alert('Error', 'Could not cancel your request. Please try again.');
+      Alert.alert(t('common.error'), t('interest.cancel_error'));
     }
   }
 
@@ -66,12 +68,12 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
       await createRideInterest(rideId);
       if (ignoredIds.has(rideId)) unignoreRide(rideId);
       if (currentUserId) fetchMyInterests(currentUserId);
-      Alert.alert('Requested', 'Your interest has been sent to the driver.');
+      Alert.alert(t('interest.requested_title'), t('interest.requested_message'));
     } catch (error: any) {
       if (error?.response?.status === 409) {
-        Alert.alert('Already requested', 'You have already expressed interest in this ride.');
+        Alert.alert(t('interest.already_title'), t('interest.already_message'));
       } else {
-        Alert.alert('Error', 'Could not send your request. Please try again.');
+        Alert.alert(t('common.error'), t('interest.send_error'));
       }
     }
   }
@@ -91,7 +93,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
   const sections = groupByDate(othersRides);
 
   if (othersRides.length === 0) {
-    return <View style={styles.center}><Text style={styles.emptyText}>No rides available.</Text></View>;
+    return <View style={styles.center}><Text style={styles.emptyText}>{t('ride.no_available')}</Text></View>;
   }
 
   return (
@@ -150,13 +152,13 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
                     <View style={styles.vehicleInfo}>
                       <Text style={styles.vehicleName}>{vehicle?.name ?? '…'}</Text>
                       {vehicle?.plateNumber ? <Text style={styles.vehicleSub}>{vehicle.plateNumber}</Text> : null}
-                      {vehicle?.seats ? <Text style={styles.vehicleSub}>{vehicle.seats} seats</Text> : null}
+                      {vehicle?.seats ? <Text style={styles.vehicleSub}>{t('ride.seats', { count: vehicle.seats })}</Text> : null}
                     </View>
                   </View>
                 ) : (
                   <View style={styles.detailRow}>
                     <MaterialCommunityIcons name="car-off" size={20} color="#9CA3AF" />
-                    <Text style={styles.noVehicleText}>No vehicle specified</Text>
+                    <Text style={styles.noVehicleText}>{t('ride.no_vehicle')}</Text>
                   </View>
                 )}
                 <View style={styles.detailSeparator} />
@@ -171,7 +173,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
                     }}
                   >
                     <MaterialCommunityIcons name="phone" size={22} color="#2563EB" />
-                    <Text style={styles.contactLabel}>Call</Text>
+                    <Text style={styles.contactLabel}>{t('common.call')}</Text>
                   </Pressable>
                   <Pressable
                     style={styles.contactBtn}
@@ -182,7 +184,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
                     }}
                   >
                     <MaterialCommunityIcons name="whatsapp" size={22} color="#25D366" />
-                    <Text style={styles.contactLabel}>WhatsApp</Text>
+                    <Text style={styles.contactLabel}>{t('common.whatsapp')}</Text>
                   </Pressable>
                   {departurePoi?.latitude != null && departurePoi?.longitude != null && (
                     <Pressable
@@ -192,7 +194,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
                       )}
                     >
                       <MaterialCommunityIcons name="map-marker" size={22} color="#EF4444" />
-                      <Text style={styles.contactLabel}>Maps</Text>
+                      <Text style={styles.contactLabel}>{t('common.maps')}</Text>
                     </Pressable>
                   )}
                 </View>

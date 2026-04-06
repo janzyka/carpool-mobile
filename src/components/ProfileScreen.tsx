@@ -7,6 +7,7 @@ import {
   ActivityIndicator, Alert, Image, Pressable,
   ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Swipeable } from 'react-native-gesture-handler';
 import { patchUser } from '../api/users';
 import { VehicleDto } from '../api/vehicles';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function ProfileScreen({ currentUserId }: Props) {
+  const { t } = useTranslation();
   const { getUser, ensureUser, refreshUser } = useUserCacheStore();
   const { vehicles, loading: vehiclesLoading, removeVehicle } = useVehiclesStore();
   const user = currentUserId ? getUser(currentUserId) : undefined;
@@ -31,10 +33,10 @@ export default function ProfileScreen({ currentUserId }: Props) {
   const [showAddVehicle, setShowAddVehicle] = useState(false);
 
   async function handleDeleteVehicle(vehicle: VehicleDto) {
-    Alert.alert('Delete vehicle', `Remove "${vehicle.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('profile.delete_vehicle_title'), t('profile.delete_vehicle_message', { name: vehicle.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: () => removeVehicle(vehicle.id),
+        text: t('profile.delete_confirm'), style: 'destructive', onPress: () => removeVehicle(vehicle.id),
       },
     ]);
   }
@@ -69,7 +71,7 @@ export default function ProfileScreen({ currentUserId }: Props) {
   async function pickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission required', 'Allow access to your photo library to change your avatar.');
+      Alert.alert(t('profile.photo_permission_title'), t('profile.photo_permission_message'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -98,9 +100,9 @@ export default function ProfileScreen({ currentUserId }: Props) {
       await patchUser(currentUserId, payload);
       await refreshUser(currentUserId);
       setLocalIcon(null); // mark icon change as committed
-      Alert.alert('Saved', 'Your profile has been updated.');
+      Alert.alert(t('profile.saved_title'), t('profile.saved_message'));
     } catch {
-      Alert.alert('Error', 'Could not save your profile. Please try again.');
+      Alert.alert(t('common.error'), t('profile.save_error'));
     } finally {
       setSaving(false);
     }
@@ -138,19 +140,19 @@ export default function ProfileScreen({ currentUserId }: Props) {
       </Pressable>
 
       {/* Name */}
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.label}>{t('profile.name_label')}</Text>
       <TextInput
         style={styles.input}
         value={localName}
         onChangeText={setLocalName}
-        placeholder="Your name"
+        placeholder={t('profile.name_placeholder')}
         placeholderTextColor="#9CA3AF"
         autoCapitalize="words"
         returnKeyType="done"
       />
 
       {/* Phone — read-only */}
-      <Text style={styles.label}>Phone</Text>
+      <Text style={styles.label}>{t('profile.phone_label')}</Text>
       <View style={styles.readOnly}>
         <Text style={styles.readOnlyText}>{user.phoneNumber ?? '—'}</Text>
       </View>
@@ -160,13 +162,13 @@ export default function ProfileScreen({ currentUserId }: Props) {
         <Pressable style={styles.saveButton} onPress={handleSave} disabled={saving}>
           {saving
             ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.saveLabel}>Save</Text>}
+            : <Text style={styles.saveLabel}>{t('common.save')}</Text>}
         </Pressable>
       )}
 
       {/* ── Vehicles section ── */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Vehicles</Text>
+        <Text style={styles.sectionTitle}>{t('profile.vehicles_title')}</Text>
         <Pressable onPress={() => setShowAddVehicle(true)} style={styles.addButton} hitSlop={10}>
           <MaterialCommunityIcons name="plus" size={20} color="#fff" />
         </Pressable>
@@ -175,7 +177,7 @@ export default function ProfileScreen({ currentUserId }: Props) {
       {vehiclesLoading && vehicles.length === 0 ? (
         <ActivityIndicator size="small" color="#3D3530" style={{ marginTop: 12 }} />
       ) : vehicles.length === 0 ? (
-        <Text style={styles.emptyVehicles}>No vehicles yet. Tap + to add one.</Text>
+        <Text style={styles.emptyVehicles}>{t('profile.no_vehicles')}</Text>
       ) : (
         vehicles.map((v) => {
           const iconUri = v.icon ? `data:image/jpeg;base64,${v.icon}` : null;

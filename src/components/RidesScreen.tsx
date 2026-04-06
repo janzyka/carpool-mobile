@@ -9,6 +9,7 @@ import { useRidesStore } from '../store/ridesStore';
 import { useAuthStore } from '../store/authStore';
 import SwipeableRideRow from './SwipeableRideRow';
 import SwipeableRequestRow from './SwipeableRequestRow';
+import { useTranslation } from 'react-i18next';
 import { parseDeparture, formatTime, groupByDate, resolveInterestDisplayStatus } from '../utils/rideUtils';
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
 
 
 export default function RidesScreen({ rides, pois, loading, error, currentUserId, onRefresh }: Props) {
+  const { t } = useTranslation();
   const poiMap = new Map(pois.map((p) => [p.id, p.name]));
   const deleteRide = useRidesStore((s) => s.deleteRide);
   const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
@@ -80,7 +82,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
   }
 
   if (rides.length === 0) {
-    return <View style={styles.center}><Text style={styles.emptyText}>No upcoming rides.</Text></View>;
+    return <View style={styles.center}><Text style={styles.emptyText}>{t('ride.no_upcoming')}</Text></View>;
   }
 
   const filteredRides = rides
@@ -134,7 +136,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
               <View style={styles.detailPanel}>
                 {rideInterests.length === 0 ? (
                   <View style={styles.noInterests}>
-                    <Text style={styles.noInterestsText}>No interests yet.</Text>
+                    <Text style={styles.noInterestsText}>{t('ride.no_interests')}</Text>
                   </View>
                 ) : (
                   rideInterests.map((interest, idx) => (

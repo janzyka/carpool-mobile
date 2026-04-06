@@ -2,10 +2,12 @@ import { registerUser, verifyUser } from '../src/api/auth';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import OtpInput from '../src/components/OtpInput';
 import { useAuthStore } from '../src/store/authStore';
 
 export default function VerifyScreen() {
+  const { t } = useTranslation();
   const { userId: initialUserId } = useLocalSearchParams<{ userId: string }>();
   const { setAuth, pendingRegistration, clearPendingRegistration } = useAuthStore();
   const [userId, setUserId] = useState(initialUserId);
@@ -22,7 +24,7 @@ export default function VerifyScreen() {
       clearPendingRegistration();
       router.replace('/home');
     } catch {
-      Alert.alert('Incorrect code', 'The verification code is wrong. Please try again.');
+      Alert.alert(t('verify.wrong_code_title'), t('verify.wrong_code_message'));
     } finally {
       setVerifying(false);
     }
@@ -40,7 +42,7 @@ export default function VerifyScreen() {
       setUserId(String(data.id));
       setOtpKey((k) => k + 1);
     } catch {
-      Alert.alert('Failed to resend', 'Please try again.');
+      Alert.alert(t('verify.resend_failed_title'), t('verify.resend_failed_message'));
     } finally {
       setResending(false);
     }
@@ -49,16 +51,16 @@ export default function VerifyScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <Text style={styles.title}>Verify your number</Text>
+      <Text style={styles.title}>{t('verify.title')}</Text>
       <Text style={styles.subtitle}>
-        Enter the 6-digit code we sent to your phone.
+        {t('verify.subtitle')}
       </Text>
       <OtpInput key={otpKey} onComplete={handleComplete} disabled={verifying || resending} />
-      {verifying && <Text style={styles.status}>Checking…</Text>}
-      {resending && <Text style={styles.status}>Sending new code…</Text>}
+      {verifying && <Text style={styles.status}>{t('verify.checking')}</Text>}
+      {resending && <Text style={styles.status}>{t('verify.sending')}</Text>}
       {!verifying && !resending && (
         <Pressable onPress={handleResend} style={styles.resendButton}>
-          <Text style={styles.resendText}>Resend code</Text>
+          <Text style={styles.resendText}>{t('verify.resend')}</Text>
         </Pressable>
       )}
     </View>

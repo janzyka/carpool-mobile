@@ -5,6 +5,9 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +21,7 @@ import { registerUser } from '../src/api/auth';
 import { useAuthStore } from '../src/store/authStore';
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [icon, setIcon] = useState<string | null>(null);
@@ -38,8 +42,8 @@ export default function RegisterScreen() {
   };
 
   const handleGo = async () => {
-    if (!name.trim()) { Alert.alert('Please enter your name'); return; }
-    if (!phoneNumber.trim()) { Alert.alert('Please enter your phone number'); return; }
+    if (!name.trim()) { Alert.alert(t('register.name_required')); return; }
+    if (!phoneNumber.trim()) { Alert.alert(t('register.phone_required')); return; }
 
     setLoading(true);
     try {
@@ -49,7 +53,7 @@ export default function RegisterScreen() {
       setPendingRegistration({ name: trimmedName, phoneNumber: trimmedPhone, icon: icon ?? undefined });
       router.push({ pathname: '/verify', params: { userId: String(data.id) } });
     } catch {
-      Alert.alert('Registration failed', 'Please check your details and try again.');
+      Alert.alert(t('register.failed_title'), t('register.failed_message'));
     } finally {
       setLoading(false);
     }
@@ -62,33 +66,33 @@ export default function RegisterScreen() {
     >
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Welcome to Carpool</Text>
-        <Text style={styles.subtitle}>Enter your details to get started</Text>
+        <Text style={styles.title}>{t('register.title')}</Text>
+        <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
 
         <Pressable style={styles.avatarWrapper} onPress={pickIcon}>
           {icon ? (
             <Image source={{ uri: `data:image/jpeg;base64,${icon}` }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarPlaceholderText}>Photo{'\n'}(optional)</Text>
+              <Text style={styles.avatarPlaceholderText}>{t('register.photo_optional')}</Text>
             </View>
           )}
         </Pressable>
 
-        <Text style={styles.label}>Name</Text>
+        <Text style={styles.label}>{t('register.name_label')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Your name"
+          placeholder={t('register.name_placeholder')}
           value={name}
           onChangeText={setName}
           autoCapitalize="words"
           returnKeyType="next"
         />
 
-        <Text style={styles.label}>Phone number</Text>
+        <Text style={styles.label}>{t('register.phone_label')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="+420 737 000 000"
+          placeholder={t('register.phone_placeholder')}
           value={phoneNumber}
           onChangeText={setPhoneNumber}
           keyboardType="phone-pad"
@@ -102,7 +106,7 @@ export default function RegisterScreen() {
         >
           {loading
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.buttonText}>Go</Text>}
+            : <Text style={styles.buttonText}>{t('register.submit')}</Text>}
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>

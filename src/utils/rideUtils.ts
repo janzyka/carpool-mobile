@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { Ride } from '../api/rides';
 
 export const PAST_HIDE_MINUTES = 5;
@@ -25,22 +26,22 @@ export function dateKey(d: Date): string {
 
 export function sectionTitle(key: string): string {
   const now = new Date();
-  if (key === dateKey(now)) return 'Today';
+  if (key === dateKey(now)) return i18next.t('time.today');
   // Parse the key back as local noon to avoid DST edge cases.
   const d = new Date(`${key}T12:00:00`);
-  const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'short', day: 'numeric' };
   if (d.getFullYear() !== now.getFullYear()) options.year = 'numeric';
-  return d.toLocaleDateString(undefined, options);
+  return d.toLocaleDateString(i18next.language, options);
 }
 
 export function formatTime(departure: Date): TimeLabel {
   const minutes = (departure.getTime() - Date.now()) / 60_000;
   if (minutes < 0) {
     const ago = Math.round(-minutes);
-    return { text: `${ago} min ago`, isPast: true };
+    return { text: i18next.t('time.minutes_ago', { count: ago }), isPast: true };
   }
   if (minutes <= 60) {
-    return { text: `In ${Math.round(minutes)} min`, isPast: false };
+    return { text: i18next.t('time.in_minutes', { count: Math.round(minutes) }), isPast: false };
   }
   return {
     text: departure.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),

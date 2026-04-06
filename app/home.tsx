@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppState, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -35,19 +36,20 @@ import { useVehiclesStore } from '../src/store/vehiclesStore';
 
 type Tab = 'rides' | 'requests' | 'profile';
 
-const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; title: string }[] = [
-  { id: 'rides',    label: 'Rides',    icon: 'steering',       title: 'Rides' },
-  { id: 'requests', label: 'Requests', icon: 'human-handsup',  title: 'Requests' },
-  { id: 'profile',  label: 'Profile',  icon: 'account-circle', title: 'Profile' },
-];
-
 export default function HomeScreen() {
+  const { t } = useTranslation();
+
+  const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'] }[] = [
+    { id: 'rides',    label: t('tabs.rides'),    icon: 'steering'       },
+    { id: 'requests', label: t('tabs.requests'), icon: 'human-handsup'  },
+    { id: 'profile',  label: t('tabs.profile'),  icon: 'account-circle' },
+  ];
   const [activeTab, setActiveTab] = useState<Tab>('rides');
   const [showAddRide, setShowAddRide] = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(false);
   const [dataReady, setDataReady] = useState(false);
   const hasLoaded = useRef(false);
-  const current = TABS.find((t) => t.id === activeTab)!;
+  const current = TABS.find((tab) => tab.id === activeTab)!;
   const { pois, syncPois } = usePoiStore();
   const { rides, loading: ridesLoading, error: ridesError, fetchRides } = useRidesStore();
   const { loadIgnored } = useIgnoredRidesStore();
@@ -161,7 +163,7 @@ export default function HomeScreen() {
       {/* ── Fixed header ── */}
       <View style={styles.header}>
         <View style={styles.headerSide} />
-        <Text style={styles.headerTitle}>{current.title}</Text>
+        <Text style={styles.headerTitle}>{current.label}</Text>
         <View style={styles.headerSide}>
           {activeTab === 'rides' && (
             <Pressable onPress={() => setShowAddRide(true)} hitSlop={12}>

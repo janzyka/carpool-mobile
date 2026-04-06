@@ -1,0 +1,143 @@
+{
+  "common": {
+    "error": "Error",
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "create": "Create",
+    "go": "Go",
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "maps": "Maps",
+    "keep": "Keep",
+    "delete": "Delete",
+    "unknown": "Unknown",
+    "no_phone_title": "No phone number"
+  },
+  "tabs": {
+    "rides": "Rides",
+    "requests": "Requests",
+    "profile": "Profile"
+  },
+  "time": {
+    "today": "Today",
+    "minutes_ago_one": "1 min ago",
+    "minutes_ago_other": "{{count}} min ago",
+    "in_minutes_one": "In 1 min",
+    "in_minutes_other": "In {{count}} min"
+  },
+  "interest": {
+    "status_pending": "Requested",
+    "status_accepted": "Accepted",
+    "status_declined": "Declined",
+    "status_cancelled": "Cancelled",
+    "requested_title": "Requested",
+    "requested_message": "Your interest has been sent to the driver.",
+    "already_title": "Already requested",
+    "already_message": "You have already expressed interest in this ride.",
+    "cancel_title": "Cancel request",
+    "cancel_message": "This will cancel your accepted ride request.",
+    "cancel_confirm": "Cancel request",
+    "cancel_error": "Could not cancel your request. Please try again.",
+    "send_error": "Could not send your request. Please try again.",
+    "update_error": "Could not update the request. Please try again."
+  },
+  "ride": {
+    "no_upcoming": "No upcoming rides.",
+    "no_available": "No rides available.",
+    "no_interests": "No interests yet.",
+    "cancel_title": "Cancel ride",
+    "cancel_message": "This will cancel the ride for all interested passengers.",
+    "cancel_confirm": "Cancel ride",
+    "no_vehicle": "No vehicle specified",
+    "seats_one": "1 seat",
+    "seats_other": "{{count}} seats"
+  },
+  "phone": {
+    "no_driver": "The driver has not provided a phone number.",
+    "no_passenger": "This user has not provided a phone number."
+  },
+  "profile": {
+    "name_label": "Name",
+    "name_placeholder": "Your name",
+    "phone_label": "Phone",
+    "saved_title": "Saved",
+    "saved_message": "Your profile has been updated.",
+    "save_error": "Could not save your profile. Please try again.",
+    "vehicles_title": "Vehicles",
+    "no_vehicles": "No vehicles yet. Tap + to add one.",
+    "delete_vehicle_title": "Delete vehicle",
+    "delete_vehicle_message": "Remove \"{{name}}\"?",
+    "delete_confirm": "Delete",
+    "photo_permission_title": "Permission required",
+    "photo_permission_message": "Allow access to your photo library to change your avatar."
+  },
+  "add_ride": {
+    "title": "New Ride",
+    "from_label": "From",
+    "from_placeholder": "Select departure\u2026",
+    "to_label": "To",
+    "to_placeholder": "Select destination\u2026",
+    "departure_label": "Departure",
+    "vehicle_label": "Vehicle",
+    "vehicle_placeholder": "Select vehicle (optional)\u2026",
+    "select_vehicle": "Select vehicle",
+    "vehicle_none": "None",
+    "select_departure": "Select departure",
+    "select_destination": "Select destination",
+    "missing_field_title": "Missing field",
+    "missing_from": "Please select a departure location.",
+    "missing_to": "Please select a destination.",
+    "invalid_title": "Invalid",
+    "same_location": "Departure and destination must differ.",
+    "invalid_time_title": "Invalid time",
+    "past_departure": "Departure must be in the future.",
+    "create_error": "Could not create the ride. Please try again."
+  },
+  "add_vehicle": {
+    "title": "New Vehicle",
+    "add_photo": "Add photo (optional)",
+    "change_photo": "Change photo",
+    "name_label": "Name *",
+    "name_placeholder": "e.g. My Skoda Octavia",
+    "plate_label": "Plate number",
+    "plate_placeholder": "e.g. 1AB 2345",
+    "seats_label": "Seats (excl. driver)",
+    "seats_placeholder": "e.g. 4",
+    "missing_field_title": "Missing field",
+    "name_required": "Vehicle name is required.",
+    "invalid_value_title": "Invalid value",
+    "seats_invalid": "Seats must be a number between 1 and 99.",
+    "create_error": "Could not create the vehicle. Please try again.",
+    "photo_permission_title": "Permission required",
+    "photo_permission_message": "Allow access to your photo library."
+  },
+  "register": {
+    "title": "Welcome to Carpool",
+    "subtitle": "Enter your details to get started",
+    "photo_optional": "Photo\n(optional)",
+    "name_label": "Name",
+    "name_placeholder": "Your name",
+    "phone_label": "Phone number",
+    "phone_placeholder": "+420 737 000 000",
+    "submit": "Go",
+    "name_required": "Please enter your name",
+    "phone_required": "Please enter your phone number",
+    "failed_title": "Registration failed",
+    "failed_message": "Please check your details and try again."
+  },
+  "verify": {
+    "title": "Verify your number",
+    "subtitle": "Enter the 6-digit code we sent to your phone.",
+    "checking": "Checking\u2026",
+    "sending": "Sending new code\u2026",
+    "resend": "Resend code",
+    "wrong_code_title": "Incorrect code",
+    "wrong_code_message": "The verification code is wrong. Please try again.",
+    "resend_failed_title": "Failed to resend",
+    "resend_failed_message": "Please try again."
+  },
+  "splash": {
+    "loading": "Loading your rides"
+  }
+}

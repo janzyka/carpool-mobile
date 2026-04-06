@@ -4,6 +4,9 @@ import {
   ActivityIndicator, Alert, FlatList, Modal, Pressable,
   StyleSheet, Text, TouchableWithoutFeedback, View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import {
+} from 'react-native';
 import { submitRide } from '../api/rides';
 import { Poi } from '../api/poi';
 import { useVehiclesStore } from '../store/vehiclesStore';
@@ -24,6 +27,7 @@ function defaultDeparture() {
 type PickerTarget = 'from' | 'to' | null;
 
 export default function AddRideModal({ visible, pois, onClose, onCreated }: Props) {
+  const { t } = useTranslation();
   const [from, setFrom] = useState<Poi | null>(null);
   const [to, setTo]     = useState<Poi | null>(null);
   const [departure, setDeparture] = useState<Date>(defaultDeparture);
@@ -49,17 +53,17 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
   function handleClose() { reset(); onClose(); }
 
   async function handleSubmit() {
-    if (!from) { Alert.alert('Missing field', 'Please select a departure location.'); return; }
-    if (!to)   { Alert.alert('Missing field', 'Please select a destination.'); return; }
-    if (from.id === to.id) { Alert.alert('Invalid', 'Departure and destination must differ.'); return; }
-    if (departure <= new Date()) { Alert.alert('Invalid time', 'Departure must be in the future.'); return; }
+    if (!from) { Alert.alert(t('add_ride.missing_field_title'), t('add_ride.missing_from')); return; }
+    if (!to)   { Alert.alert(t('add_ride.missing_field_title'), t('add_ride.missing_to')); return; }
+    if (from.id === to.id) { Alert.alert(t('add_ride.invalid_title'), t('add_ride.same_location')); return; }
+    if (departure <= new Date()) { Alert.alert(t('add_ride.invalid_time_title'), t('add_ride.past_departure')); return; }
     setSubmitting(true);
     try {
       await submitRide(from.id, to.id, departure, selectedVehicle?.id);
       reset();
       onCreated();
     } catch {
-      Alert.alert('Error', 'Could not create the ride. Please try again.');
+      Alert.alert(t('common.error'), t('add_ride.create_error'));
       setSubmitting(false);
     }
   }
@@ -81,33 +85,33 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
       <View style={styles.sheet}>
         {/* Header */}
         <View style={styles.sheetHeader}>
-          <Pressable onPress={handleClose}><Text style={styles.cancel}>Cancel</Text></Pressable>
-          <Text style={styles.sheetTitle}>New Ride</Text>
+          <Pressable onPress={handleClose}><Text style={styles.cancel}>{t('common.cancel')}</Text></Pressable>
+          <Text style={styles.sheetTitle}>{t('add_ride.title')}</Text>
           <Pressable onPress={handleSubmit} disabled={submitting}>
             {submitting
               ? <ActivityIndicator size="small" color="#2563EB" />
-              : <Text style={styles.done}>Create</Text>}
+              : <Text style={styles.done}>{t('common.create')}</Text>}
           </Pressable>
         </View>
 
         {/* From */}
-        <Text style={styles.label}>From</Text>
+        <Text style={styles.label}>{t('add_ride.from_label')}</Text>
         <Pressable style={styles.selector} onPress={() => setPickerTarget('from')}>
           <Text style={from ? styles.selectorValue : styles.selectorPlaceholder}>
-            {from?.name ?? 'Select departure…'}
+            {from?.name ?? t('add_ride.from_placeholder')}
           </Text>
         </Pressable>
 
         {/* To */}
-        <Text style={styles.label}>To</Text>
+        <Text style={styles.label}>{t('add_ride.to_label')}</Text>
         <Pressable style={styles.selector} onPress={() => setPickerTarget('to')}>
           <Text style={to ? styles.selectorValue : styles.selectorPlaceholder}>
-            {to?.name ?? 'Select destination…'}
+            {to?.name ?? t('add_ride.to_placeholder')}
           </Text>
         </Pressable>
 
         {/* Departure */}
-        <Text style={styles.label}>Departure</Text>
+        <Text style={styles.label}>{t('add_ride.departure_label')}</Text>
         <View style={styles.dateRow}>
           <Pressable style={[styles.selector, styles.dateCell]} onPress={openDatePicker}>
             <Text style={styles.selectorValue}>{formatDate(departure)}</Text>
@@ -120,10 +124,10 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
         {/* Vehicle — only shown when user has at least one */}
         {vehicles.length > 0 && (
           <>
-            <Text style={styles.label}>Vehicle</Text>
+            <Text style={styles.label}>{t('add_ride.vehicle_label')}</Text>
             <Pressable style={styles.selector} onPress={() => setShowVehiclePicker(true)}>
               <Text style={selectedVehicle ? styles.selectorValue : styles.selectorPlaceholder}>
-                {selectedVehicle ? selectedVehicle.name : 'Select vehicle (optional)…'}
+                {selectedVehicle ? selectedVehicle.name : t('add_ride.vehicle_placeholder')}
               </Text>
             </Pressable>
           </>
@@ -152,9 +156,9 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
             <View style={styles.backdrop} />
           </TouchableWithoutFeedback>
           <View style={styles.poiSheet}>
-            <Text style={styles.poiSheetTitle}>Select vehicle</Text>
+            <Text style={styles.poiSheetTitle}>{t('add_ride.select_vehicle')}</Text>
             <FlatList
-              data={[{ id: -1, name: 'None' } as any, ...vehicles]}
+              data={[{ id: -1, name: t('add_ride.vehicle_none') } as any, ...vehicles]}
               keyExtractor={(v) => String(v.id)}
               renderItem={({ item }) => (
                 <Pressable style={styles.poiRow} onPress={() => {
@@ -177,7 +181,7 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
           </TouchableWithoutFeedback>
           <View style={styles.poiSheet}>
             <Text style={styles.poiSheetTitle}>
-              {pickerTarget === 'from' ? 'Select departure' : 'Select destination'}
+              {pickerTarget === 'from' ? t('add_ride.select_departure') : t('add_ride.select_destination')}
             </Text>
             <FlatList
               data={pois}

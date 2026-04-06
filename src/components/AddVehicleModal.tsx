@@ -5,6 +5,9 @@ import { useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform,
   Pressable, ScrollView, StyleSheet, Text, TextInput,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import {
   TouchableWithoutFeedback, View,
 } from 'react-native';
 import { createVehicle } from '../api/vehicles';
@@ -18,6 +21,7 @@ interface Props {
 }
 
 export default function AddVehicleModal({ visible, userId, onClose, onCreated }: Props) {
+  const { t } = useTranslation();
   const [name, setName]             = useState('');
   const [icon, setIcon]             = useState<string | null>(null); // base64
   const [plateNumber, setPlateNumber] = useState('');
@@ -37,7 +41,7 @@ export default function AddVehicleModal({ visible, userId, onClose, onCreated }:
   async function pickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission required', 'Allow access to your photo library.');
+      Alert.alert(t('add_vehicle.photo_permission_title'), t('add_vehicle.photo_permission_message'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -57,10 +61,10 @@ export default function AddVehicleModal({ visible, userId, onClose, onCreated }:
   }
 
   async function handleSubmit() {
-    if (!name.trim()) { Alert.alert('Missing field', 'Vehicle name is required.'); return; }
+    if (!name.trim()) { Alert.alert(t('add_vehicle.missing_field_title'), t('add_vehicle.name_required')); return; }
     const seatsNum = seats.trim() ? parseInt(seats.trim(), 10) : undefined;
     if (seats.trim() && (isNaN(seatsNum!) || seatsNum! < 1 || seatsNum! > 99)) {
-      Alert.alert('Invalid value', 'Seats must be a number between 1 and 99.');
+      Alert.alert(t('add_vehicle.invalid_value_title'), t('add_vehicle.seats_invalid'));
       return;
     }
     setSubmitting(true);
@@ -75,7 +79,7 @@ export default function AddVehicleModal({ visible, userId, onClose, onCreated }:
       reset();
       onCreated();
     } catch {
-      Alert.alert('Error', 'Could not create the vehicle. Please try again.');
+      Alert.alert(t('common.error'), t('add_vehicle.create_error'));
       setSubmitting(false);
     }
   }
@@ -91,12 +95,12 @@ export default function AddVehicleModal({ visible, userId, onClose, onCreated }:
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.sheetHeader}>
-          <Pressable onPress={handleClose}><Text style={styles.cancel}>Cancel</Text></Pressable>
-          <Text style={styles.sheetTitle}>New Vehicle</Text>
+          <Pressable onPress={handleClose}><Text style={styles.cancel}>{t('common.cancel')}</Text></Pressable>
+          <Text style={styles.sheetTitle}>{t('add_vehicle.title')}</Text>
           <Pressable onPress={handleSubmit} disabled={submitting}>
             {submitting
               ? <ActivityIndicator size="small" color="#2563EB" />
-              : <Text style={styles.done}>Add</Text>}
+              : <Text style={styles.done}>{t('common.add')}</Text>}
           </Pressable>
         </View>
 
@@ -109,27 +113,27 @@ export default function AddVehicleModal({ visible, userId, onClose, onCreated }:
               <MaterialCommunityIcons name="car-side" size={28} color="#fff" />
             </View>
           )}
-          <Text style={styles.photoLabel}>{icon ? 'Change photo' : 'Add photo (optional)'}</Text>
+          <Text style={styles.photoLabel}>{icon ? t('add_vehicle.change_photo') : t('add_vehicle.add_photo')}</Text>
         </Pressable>
 
         {/* Name */}
-        <Text style={styles.label}>Name *</Text>
+        <Text style={styles.label}>{t('add_vehicle.name_label')}</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName}
-          placeholder="e.g. My Skoda Octavia" placeholderTextColor="#9CA3AF"
+          placeholder={t('add_vehicle.name_placeholder')} placeholderTextColor="#9CA3AF"
           autoCapitalize="words" returnKeyType="next"
           onSubmitEditing={() => plateRef.current?.focus()} blurOnSubmit={false} />
 
         {/* Plate */}
-        <Text style={styles.label}>Plate number</Text>
+        <Text style={styles.label}>{t('add_vehicle.plate_label')}</Text>
         <TextInput ref={plateRef} style={styles.input} value={plateNumber} onChangeText={setPlateNumber}
-          placeholder="e.g. 1AB 2345" placeholderTextColor="#9CA3AF"
+          placeholder={t('add_vehicle.plate_placeholder')} placeholderTextColor="#9CA3AF"
           autoCapitalize="characters" returnKeyType="next"
           onSubmitEditing={() => seatsRef.current?.focus()} blurOnSubmit={false} />
 
         {/* Seats */}
-        <Text style={styles.label}>Seats (excl. driver)</Text>
+        <Text style={styles.label}>{t('add_vehicle.seats_label')}</Text>
         <TextInput ref={seatsRef} style={styles.input} value={seats} onChangeText={setSeats}
-          placeholder="e.g. 4" placeholderTextColor="#9CA3AF"
+          placeholder={t('add_vehicle.seats_placeholder')} placeholderTextColor="#9CA3AF"
           keyboardType="number-pad" returnKeyType="done"
           onSubmitEditing={handleSubmit} />
         </ScrollView>

@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 const splash = require('../../assets/hitchhiker.png');
 
 export default function HitchhikerSplash() {
+  const { t } = useTranslation();
   const dot1 = useRef(new Animated.Value(0)).current;
   const dot2 = useRef(new Animated.Value(0)).current;
   const dot3 = useRef(new Animated.Value(0)).current;
@@ -30,7 +32,7 @@ export default function HitchhikerSplash() {
     <View style={styles.container}>
       <Image source={splash} style={styles.image} resizeMode="contain" />
       <View style={styles.loaderRow}>
-        <Text style={styles.loaderText}>Loading your rides</Text>
+        <Text style={styles.loaderText}>{t('splash.loading')}</Text>
         {[dot1, dot2, dot3].map((d, i) => (
           <Animated.Text key={i} style={[styles.dot, dotStyle(d)]}>•</Animated.Text>
         ))}

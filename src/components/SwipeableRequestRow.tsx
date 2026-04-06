@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import UserAvatar from './UserAvatar';
 import { Alert, Animated, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -48,17 +49,18 @@ const dotStyles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3 },
 });
 
-const STATUS_LABEL: Record<number, { label: string; color: string }> = {
-  0: { label: 'Pending',   color: '#9CA3AF' },
-  1: { label: 'Accepted',  color: '#22C55E' },
-  2: { label: 'Declined',  color: '#EF4444' },
-  3: { label: 'Cancelled', color: '#9CA3AF' },
-  4: { label: 'Cancelled', color: '#9CA3AF' },
-};
-
 export default function SwipeableRequestRow({ interest, fromName, toName, compact, isLoading, onAccept, onDecline }: Props) {
+  const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
   const cachedUser = useUserCacheStore((s) => s.cache.get(interest.userId));
+
+  const STATUS_LABEL: Record<number, { label: string; color: string }> = {
+    0: { label: t('interest.status_pending'),   color: '#9CA3AF' },
+    1: { label: t('interest.status_accepted'),  color: '#22C55E' },
+    2: { label: t('interest.status_declined'),  color: '#EF4444' },
+    3: { label: t('interest.status_cancelled'), color: '#9CA3AF' },
+    4: { label: t('interest.status_cancelled'), color: '#9CA3AF' },
+  };
 
   function close() { swipeRef.current?.close(); }
 
@@ -114,22 +116,22 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
                   onPress={() => {
                     const phone = cachedUser?.phoneNumber;
                     if (phone) Linking.openURL(`tel:${phone}`);
-                    else Alert.alert('No phone number', 'This user has not provided a phone number.');
+                    else Alert.alert(t('common.no_phone_title'), t('phone.no_passenger'));
                   }}
                 >
                   <MaterialCommunityIcons name="phone" size={16} color="#2563EB" />
-                  <Text style={styles.contactLabel}>Call</Text>
+                  <Text style={styles.contactLabel}>{t('common.call')}</Text>
                 </Pressable>
                 <Pressable
                   style={styles.contactBtn}
                   onPress={() => {
                     const phone = cachedUser?.phoneNumber?.replace(/\D/g, '');
                     if (phone) Linking.openURL(`https://wa.me/${phone}`);
-                    else Alert.alert('No phone number', 'This user has not provided a phone number.');
+                    else Alert.alert(t('common.no_phone_title'), t('phone.no_passenger'));
                   }}
                 >
                   <MaterialCommunityIcons name="whatsapp" size={16} color="#25D366" />
-                  <Text style={styles.contactLabel}>WhatsApp</Text>
+                  <Text style={styles.contactLabel}>{t('common.whatsapp')}</Text>
                 </Pressable>
               </View>
             </View>

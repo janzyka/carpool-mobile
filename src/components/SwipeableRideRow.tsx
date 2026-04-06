@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import UserAvatar from './UserAvatar';
 import { Alert, Animated, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -30,18 +31,19 @@ interface Props {
   onPress?: () => void;
 }
 
-const INTEREST_ICONS: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; label: string }> = {
-  0: { name: 'clock-outline',  color: '#9CA3AF', label: 'Requested' },
-  1: { name: 'check-circle',   color: '#22C55E', label: 'Accepted'  },
-  2: { name: 'close-circle',   color: '#EF4444', label: 'Declined'  },
-  4: { name: 'cancel',         color: '#9CA3AF', label: 'Cancelled' },
-};
-
 export default function SwipeableRideRow({
   ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, interestCounts, isHidden, onDelete, onIgnore, onUnhide, onExpressInterest, onCancelInterest, onPress,
 }: Props) {
+  const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
   const driverName = useUserCacheStore((s) => s.cache.get(ride.userId)?.name);
+
+  const INTEREST_ICONS: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; label: string }> = {
+    0: { name: 'clock-outline',  color: '#9CA3AF', label: t('interest.status_pending')  },
+    1: { name: 'check-circle',   color: '#22C55E', label: t('interest.status_accepted') },
+    2: { name: 'close-circle',   color: '#EF4444', label: t('interest.status_declined') },
+    4: { name: 'cancel',         color: '#9CA3AF', label: t('interest.status_cancelled') },
+  };
 
   function renderDeleteAction(progress: Animated.AnimatedInterpolation<number>) {
     const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
@@ -52,11 +54,11 @@ export default function SwipeableRideRow({
           onPress={() => {
             swipeRef.current?.close();
             Alert.alert(
-              'Cancel ride',
-              'This will cancel the ride for all interested passengers.',
+              t('ride.cancel_title'),
+              t('ride.cancel_message'),
               [
-                { text: 'Keep', style: 'cancel', onPress: () => swipeRef.current?.close() },
-                { text: 'Cancel ride', style: 'destructive', onPress: () => onDelete(ride.id) },
+                { text: t('common.keep'), style: 'cancel', onPress: () => swipeRef.current?.close() },
+                { text: t('ride.cancel_confirm'), style: 'destructive', onPress: () => onDelete(ride.id) },
               ],
             );
           }}
@@ -91,11 +93,11 @@ export default function SwipeableRideRow({
           onPress={() => {
             swipeRef.current?.close();
             Alert.alert(
-              'Cancel request',
-              'This will cancel your accepted ride request.',
+              t('interest.cancel_title'),
+              t('interest.cancel_message'),
               [
-                { text: 'Keep', style: 'cancel', onPress: () => swipeRef.current?.close() },
-                { text: 'Cancel request', style: 'destructive', onPress: () => onCancelInterest?.() },
+                { text: t('common.keep'), style: 'cancel', onPress: () => swipeRef.current?.close() },
+                { text: t('interest.cancel_confirm'), style: 'destructive', onPress: () => onCancelInterest?.() },
               ],
             );
           }}
