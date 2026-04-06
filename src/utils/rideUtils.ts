@@ -48,6 +48,20 @@ export function formatTime(departure: Date): TimeLabel {
   };
 }
 
+/**
+ * Resolves the display status for a ride interest from both columns.
+ * status=1 (cancelled by user) overrides driver_response entirely.
+ * Otherwise driver_response drives the display (0=pending, 1=accepted, 2=declined, 3=cancelled by driver).
+ * Returns 4 for the "Cancelled" display bucket when status=1.
+ */
+export function resolveInterestDisplayStatus(
+  interest: { status: number; driverResponse: number } | undefined,
+): number | undefined {
+  if (!interest) return undefined;
+  if (interest.status === 1) return 4; // user-cancelled overrides driver response
+  return interest.driverResponse;
+}
+
 export function groupByDate(rides: Ride[]): RideSection[] {
   const map = new Map<string, Ride[]>();
   for (const ride of rides) {

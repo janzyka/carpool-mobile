@@ -19,22 +19,26 @@ interface Props {
   toName: string;
   timeLabel: string;
   isPast: boolean;
-  interestStatus?: number;  // 0=pending, 1=accepted, 2=declined; undefined = no interest
+  interestStatus?: number;  // resolved display value: 0=pending, 1=accepted, 2=declined, 3=cancelled by driver, 4=cancelled by user; undefined = no interest
   interestCounts?: InterestCounts;
+  isHidden?: boolean;
   onDelete: (id: number) => void;
   onIgnore: (id: number) => void;
+  onUnhide?: (id: number) => void;
   onExpressInterest: (id: number) => void;
+  onCancelInterest?: () => void;
   onPress?: () => void;
 }
 
 const INTEREST_ICONS: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; label: string }> = {
-  0: { name: 'clock-outline', color: '#9CA3AF', label: 'Requested' },
-  1: { name: 'check-circle',  color: '#22C55E', label: 'Accepted'  },
-  2: { name: 'close-circle',  color: '#EF4444', label: 'Declined'  },
+  0: { name: 'clock-outline',  color: '#9CA3AF', label: 'Requested' },
+  1: { name: 'check-circle',   color: '#22C55E', label: 'Accepted'  },
+  2: { name: 'close-circle',   color: '#EF4444', label: 'Declined'  },
+  4: { name: 'cancel',         color: '#9CA3AF', label: 'Cancelled' },
 };
 
 export default function SwipeableRideRow({
-  ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, interestCounts, onDelete, onIgnore, onExpressInterest, onPress,
+  ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, interestCounts, isHidden, onDelete, onIgnore, onUnhide, onExpressInterest, onCancelInterest, onPress,
 }: Props) {
   const swipeRef = useRef<Swipeable>(null);
   const driverName = useUserCacheStore((s) => s.cache.get(ride.userId)?.name);
@@ -78,20 +82,54 @@ export default function SwipeableRideRow({
     );
   }
 
-  function renderIgnoreAction(progress: Animated.AnimatedInterpolation<number>) {
+  function renderCancelInterestAction(progress: Animated.AnimatedInterpolation<number>) {
     const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
     return (
       <Animated.View style={[styles.actionPanel, { opacity }]}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => onIgnore(ride.id)}>
-          {/* No-entry sign: white horizontal bar on red background */}
-          <View style={styles.noEntryBar} />
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => {
+            swipeRef.current?.close();
+            Alert.alert(
+              'Cancel request',
+              'This will cancel your accepted ride request.',
+              [
+                { text: 'Keep', style: 'cancel', onPress: () => swipeRef.current?.close() },
+                { text: 'Cancel request', style: 'destructive', onPress: () => onCancelInterest?.() },
+              ],
+            );
+          }}
+        >
+          <MaterialCommunityIcons name="minus-thick" size={28} color="#fff" />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
+  function renderIgnoreAction(progress: Animated.AnimatedInterpolation<number>) {
+    const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+    return (
+      <Animated.View style={[styles.actionPanel, styles.ignorePanel, { opacity }]}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => { swipeRef.current?.close(); onIgnore(ride.id); }}>
+          <MaterialCommunityIcons name="eye-off-outline" size={26} color="#fff" />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
+  function renderUnhideAction(progress: Animated.AnimatedInterpolation<number>) {
+    const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+    return (
+      <Animated.View style={[styles.actionPanel, styles.unhidePanel, { opacity }]}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => { swipeRef.current?.close(); onUnhide?.(ride.id); }}>
+          <MaterialCommunityIcons name="eye-outline" size={26} color="#fff" />
         </TouchableOpacity>
       </Animated.View>
     );
   }
 
   const rowContent = (
-    <Pressable style={styles.row} onPress={onPress}>
+    <Pressable style={[styles.row, isHidden && styles.rowHidden]} onPress={onPress}>
       {isOwner ? (
         <View style={styles.vehicleIcon}>
           <MaterialCommunityIcons name="car-side" size={24} color="#fff" />
@@ -149,8 +187,14 @@ export default function SwipeableRideRow({
   return (
     <Swipeable
       ref={swipeRef}
-      renderLeftActions={!isOwner ? renderInterestAction : undefined}
-      renderRightActions={isOwner ? renderDeleteAction : renderIgnoreAction}
+      renderLeftActions={!isOwner
+        ? interestStatus === 1
+          ? renderCancelInterestAction
+          : interestStatus === undefined
+            ? renderInterestAction
+            : undefined
+        : undefined}
+      renderRightActions={isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
       leftThreshold={60}
       rightThreshold={60}
       overshootLeft={false}
@@ -209,17 +253,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  ignorePanel: {
+    backgroundColor: '#9CA3AF',
+  },
+  unhidePanel: {
+    backgroundColor: '#22C55E',
+  },
+  rowHidden: {
+    opacity: 0.4,
+  },
   actionButton: {
     flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  noEntryBar: {
-    width: 36,
-    height: 7,
-    borderRadius: 3,
-    backgroundColor: '#fff',
   },
 });

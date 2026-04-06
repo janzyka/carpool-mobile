@@ -8,6 +8,7 @@ interface IgnoredRidesState {
   loaded: boolean;
   loadIgnored: () => Promise<void>;
   ignoreRide: (id: number) => Promise<void>;
+  unignoreRide: (id: number) => Promise<void>;
 }
 
 export const useIgnoredRidesStore = create<IgnoredRidesState>((set, get) => ({
@@ -36,6 +37,18 @@ export const useIgnoredRidesStore = create<IgnoredRidesState>((set, get) => ({
       console.log(`[ignored] ride ${id} ignored and persisted`);
     } catch (e) {
       console.error('[ignored] failed to persist ignored ride', e);
+    }
+  },
+
+  unignoreRide: async (id: number) => {
+    const next = new Set(get().ignoredIds);
+    next.delete(id);
+    set({ ignoredIds: next });
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)));
+      console.log(`[ignored] ride ${id} unignored and persisted`);
+    } catch (e) {
+      console.error('[ignored] failed to persist unignored ride', e);
     }
   },
 }));

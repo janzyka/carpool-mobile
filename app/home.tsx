@@ -44,6 +44,7 @@ const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof Material
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('rides');
   const [showAddRide, setShowAddRide] = useState(false);
+  const [showAllRequests, setShowAllRequests] = useState(false);
   const [dataReady, setDataReady] = useState(false);
   const hasLoaded = useRef(false);
   const current = TABS.find((t) => t.id === activeTab)!;
@@ -159,31 +160,21 @@ export default function HomeScreen() {
 
       {/* ── Fixed header ── */}
       <View style={styles.header}>
-        <View style={styles.headerSide}>
-          {activeTab === 'rides' && (
-            <Pressable
-              onPress={() => { fetchRides(); if (currentUserId) fetchRequests(currentUserId); }}
-              disabled={ridesLoading}
-              hitSlop={12}
-            >
-              <MaterialCommunityIcons name="refresh" size={24} color={ridesLoading ? 'rgba(61,53,48,0.3)' : '#3D3530'} />
-            </Pressable>
-          )}
-          {activeTab === 'requests' && (
-            <Pressable
-              onPress={() => { fetchRides(); if (currentUserId) fetchMyInterests(currentUserId); }}
-              disabled={ridesLoading}
-              hitSlop={12}
-            >
-              <MaterialCommunityIcons name="refresh" size={24} color={ridesLoading ? 'rgba(61,53,48,0.3)' : '#3D3530'} />
-            </Pressable>
-          )}
-        </View>
+        <View style={styles.headerSide} />
         <Text style={styles.headerTitle}>{current.title}</Text>
         <View style={styles.headerSide}>
           {activeTab === 'rides' && (
             <Pressable onPress={() => setShowAddRide(true)} hitSlop={12}>
               <MaterialCommunityIcons name="plus" size={26} color="#3D3530" />
+            </Pressable>
+          )}
+          {activeTab === 'requests' && (
+            <Pressable onPress={() => setShowAllRequests((v) => !v)} hitSlop={12}>
+              <MaterialCommunityIcons
+                name={showAllRequests ? 'filter-off-outline' : 'filter-outline'}
+                size={24}
+                color={showAllRequests ? '#2563EB' : '#3D3530'}
+              />
             </Pressable>
           )}
         </View>
@@ -205,6 +196,7 @@ export default function HomeScreen() {
             loading={ridesLoading}
             error={ridesError}
             currentUserId={currentUserId}
+            onRefresh={() => { fetchRides(); if (currentUserId) fetchRequests(currentUserId); }}
           />
         )}
         {activeTab === 'requests' && (
@@ -214,6 +206,8 @@ export default function HomeScreen() {
             loading={ridesLoading}
             error={ridesError}
             currentUserId={currentUserId}
+            showAll={showAllRequests}
+            onRefresh={() => { fetchRides(); if (currentUserId) fetchMyInterests(currentUserId); }}
           />
         )}
         {activeTab === 'profile'  && <ProfileScreen currentUserId={currentUserId} />}

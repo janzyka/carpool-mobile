@@ -187,6 +187,28 @@ aws logs filter-log-events \
 
 ---
 
+---
+
+## Push notification events
+
+All push notifications are sent via the Expo Push API through the `send-push-notification` Lambda (non-VPC). VPC-bound Lambdas dispatch to it asynchronously via the Lambda VPC Interface Endpoint.
+
+| Event | Trigger | Recipient(s) | Title | `data.type` | App reaction |
+|---|---|---|---|---|---|
+| New ride posted | `POST /rides` | All verified users except the poster | "New ride available" | `new_ride` | Refresh rides + interests |
+| New ride interest | `POST /ride-interests` | Ride owner | "New ride request" | `new_interest` | Refresh requests (Rides tab) |
+| Interest accepted | `POST /ride-interests/{id}/response` (accepted=true) | Interest requester | "Request accepted 🎉" | `interest_response` | Refresh interests (Requests tab) |
+| Interest declined | `POST /ride-interests/{id}/response` (accepted=false) | Interest requester | "Request declined" | `interest_response` | Refresh interests (Requests tab) |
+| Ride cancelled by driver | `DELETE /rides/{id}` | All users with pending or accepted interest on that ride | "Ride cancelled 🚫" | `interest_response` | Refresh interests (Requests tab) |
+
+**Notes:**
+- Push is best-effort — it never fails the main API request
+- Recipients must have a non-null `push_token` in `app_user` — set on app launch after permission is granted
+- `interest_response` with `status=3` means cancelled by ride deletion (as opposed to `status=2` which is an explicit driver decline)
+- The app also refreshes all data on `AppState` foreground transition (user switches back to app without tapping a notification)
+
+---
+
 ### How notifications trigger data refresh
 
 | Event | Notification type | App action |

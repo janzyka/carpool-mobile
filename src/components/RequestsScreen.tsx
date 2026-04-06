@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Linking, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
-import { Ride, createRideInterest } from '../api/rides';
+import { ActivityIndicator, Alert, Image, Linking, Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
+import { Ride, cancelRideInterest, createRideInterest } from '../api/rides';
 import { Poi } from '../api/poi';
 import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
 import { useMyInterestsStore } from '../store/myInterestsStore';
@@ -9,7 +9,7 @@ import { useRidesStore } from '../store/ridesStore';
 import { useUserCacheStore } from '../store/userCacheStore';
 import { useVehiclesStore } from '../store/vehiclesStore';
 import SwipeableRideRow from './SwipeableRideRow';
-import { parseDeparture, formatTime, groupByDate } from '../utils/rideUtils';
+import { parseDeparture, formatTime, groupByDate, resolveInterestDisplayStatus } from '../utils/rideUtils';
 
 interface Props {
   rides: Ride[];
@@ -17,12 +17,14 @@ interface Props {
   loading: boolean;
   error: string | null;
   currentUserId: number | null;
+  showAll?: boolean;
+  onRefresh: () => void;
 }
 
-export default function RequestsScreen({ rides, pois, loading, error, currentUserId }: Props) {
+export default function RequestsScreen({ rides, pois, loading, error, currentUserId, showAll, onRefresh }: Props) {
   const poiMap   = new Map(pois.map((p) => [p.id, p.name]));
   const poiById  = new Map(pois.map((p) => [p.id, p]));
-  const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
+  const { ignoredIds, ignoreRide, unignoreRide } = useIgnoredRidesStore();
   const interestsByRideId = useMyInterestsStore((s) => s.byRideId);
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
   const deleteRide = useRidesStore((s) => s.deleteRide);
@@ -33,7 +35,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
 
   function toggleExpand(ride: Ride) {
     const interest = interestsByRideId.get(ride.id);
-    if (interest?.status !== 1) return; // only accepted requests are expandable
+    if (interest?.driverResponse !== 1) return; // only accepted requests are expandable
     setExpandedRideId((prev) => (prev === ride.id ? null : ride.id));
     // Pre-fetch ride owner and vehicle when first expanding.
     ensureUser(ride.userId);
@@ -47,9 +49,22 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
     return () => clearInterval(id);
   }, []);
 
+  async function handleCancelInterest(rideId: number) {
+    const interest = interestsByRideId.get(rideId);
+    if (!interest) return;
+    try {
+      await cancelRideInterest(interest.id);
+      setExpandedRideId(null);
+      if (currentUserId) fetchMyInterests(currentUserId);
+    } catch (error: any) {
+      Alert.alert('Error', 'Could not cancel your request. Please try again.');
+    }
+  }
+
   async function handleExpressInterest(rideId: number) {
     try {
       await createRideInterest(rideId);
+      if (ignoredIds.has(rideId)) unignoreRide(rideId);
       if (currentUserId) fetchMyInterests(currentUserId);
       Alert.alert('Requested', 'Your interest has been sent to the driver.');
     } catch (error: any) {
@@ -61,7 +76,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
     }
   }
 
-  if (loading) {
+  if (loading && rides.length === 0) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>;
   }
 
@@ -70,7 +85,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
   }
 
   const othersRides = rides
-    .filter((r) => !ignoredIds.has(r.id))
+    .filter((r) => showAll || !ignoredIds.has(r.id))
     .filter((r) => r.userId !== currentUserId);
 
   const sections = groupByDate(othersRides);
@@ -86,6 +101,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
       keyExtractor={(r) => String(r.id)}
       style={{ backgroundColor: 'transparent' }}
       contentContainerStyle={styles.list}
+      refreshControl={<RefreshControl refreshing={loading && rides.length > 0} onRefresh={onRefresh} tintColor="#3D3530" />}
       stickySectionHeadersEnabled
       renderSectionHeader={({ section }) => (
         <View style={styles.sectionHeader}>
@@ -96,7 +112,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
       renderItem={({ item }) => {
         const { text, isPast } = formatTime(parseDeparture(item.departure));
         const interest = interestsByRideId.get(item.id);
-        const isAccepted = interest?.status === 1;
+        const isAccepted = interest?.driverResponse === 1;
         const isExpanded = expandedRideId === item.id;
         const owner = userCache.get(item.userId);
         const vehicle = item.vehicleId ? vehicleCache.get(item.vehicleId) : undefined;
@@ -110,10 +126,13 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
               toName={poiMap.get(item.leadsTo) ?? `POI ${item.leadsTo}`}
               timeLabel={text}
               isPast={isPast}
-              interestStatus={interest?.status}
+              interestStatus={resolveInterestDisplayStatus(interest)}
+              isHidden={ignoredIds.has(item.id)}
               onDelete={deleteRide}
               onIgnore={ignoreRide}
+              onUnhide={unignoreRide}
               onExpressInterest={handleExpressInterest}
+              onCancelInterest={() => handleCancelInterest(item.id)}
               onPress={isAccepted ? () => toggleExpand(item) : undefined}
             />
             {isAccepted && isExpanded && (

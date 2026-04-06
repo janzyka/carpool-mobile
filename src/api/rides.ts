@@ -26,6 +26,17 @@ export interface CreateRideInterestResponse {
   message: string;
 }
 
+export async function cancelRideInterest(interestId: number): Promise<void> {
+  console.log(`[rides] cancelRideInterest → PATCH /ride-interests/${interestId} (status=1)`);
+  try {
+    await apiClient.patch(`/ride-interests/${interestId}`, { status: 1 });
+    console.log(`[rides] cancelRideInterest ← success`);
+  } catch (error: any) {
+    console.error('[rides] cancelRideInterest ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    throw error;
+  }
+}
+
 export async function respondToRideInterest(id: number, accepted: boolean): Promise<void> {
   console.log(`[rides] respondToRideInterest → POST /ride-interests/${id}/response (accepted=${accepted})`);
   try {

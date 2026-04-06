@@ -4,8 +4,9 @@ import apiClient from '../api/client';
 export interface IncomingInterest {
   id: number;
   rideId: number;
-  userId: number;   // the person who expressed interest
-  status: number;   // 0=pending, 1=accepted, 2=declined
+  userId: number;         // the person who expressed interest
+  driverResponse: number; // 0=pending, 1=accepted, 2=declined, 3=cancelled by driver
+  status: number;         // 0=new, 1=cancelled by user
   created: string;
   updated: string;
 }

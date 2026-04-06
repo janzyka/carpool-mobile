@@ -2,15 +2,17 @@ import { create } from 'zustand';
 import apiClient from '../api/client';
 
 export interface RideInterest {
+  id: number;
   rideId: number;
   userId: number;
-  status: number;  // 0=pending, 1=accepted, 2=declined
+  driverResponse: number;  // 0=pending, 1=accepted, 2=declined, 3=cancelled by driver
+  status: number;          // 0=new, 1=cancelled by user
   created: string;
   updated: string;
 }
 
 interface MyInterestsState {
-  // rideId → interest status
+  // rideId → interest
   byRideId: Map<number, RideInterest>;
   loading: boolean;
   fetchMyInterests: (userId: number) => Promise<void>;

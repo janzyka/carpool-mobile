@@ -49,9 +49,11 @@ const dotStyles = StyleSheet.create({
 });
 
 const STATUS_LABEL: Record<number, { label: string; color: string }> = {
-  0: { label: 'Pending',  color: '#9CA3AF' },
-  1: { label: 'Accepted', color: '#22C55E' },
-  2: { label: 'Declined', color: '#EF4444' },
+  0: { label: 'Pending',   color: '#9CA3AF' },
+  1: { label: 'Accepted',  color: '#22C55E' },
+  2: { label: 'Declined',  color: '#EF4444' },
+  3: { label: 'Cancelled', color: '#9CA3AF' },
+  4: { label: 'Cancelled', color: '#9CA3AF' },
 };
 
 export default function SwipeableRequestRow({ interest, fromName, toName, compact, isLoading, onAccept, onDecline }: Props) {
@@ -82,7 +84,8 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
     );
   }
 
-  const status = STATUS_LABEL[interest.status] ?? { label: 'Unknown', color: '#9CA3AF' };
+  const displayKey = interest.status === 1 ? 4 : interest.driverResponse;
+  const status = STATUS_LABEL[displayKey] ?? { label: 'Unknown', color: '#9CA3AF' };
 
   return (
     <Swipeable

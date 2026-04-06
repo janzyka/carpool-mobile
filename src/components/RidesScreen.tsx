@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, SectionList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
 import { Ride, createRideInterest, respondToRideInterest } from '../api/rides';
 import { Poi } from '../api/poi';
 import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
@@ -9,7 +9,7 @@ import { useRidesStore } from '../store/ridesStore';
 import { useAuthStore } from '../store/authStore';
 import SwipeableRideRow from './SwipeableRideRow';
 import SwipeableRequestRow from './SwipeableRequestRow';
-import { parseDeparture, formatTime, groupByDate } from '../utils/rideUtils';
+import { parseDeparture, formatTime, groupByDate, resolveInterestDisplayStatus } from '../utils/rideUtils';
 
 interface Props {
   rides: Ride[];
@@ -17,11 +17,12 @@ interface Props {
   loading: boolean;
   error: string | null;
   currentUserId: number | null;
+  onRefresh: () => void;
 }
 
 
 
-export default function RidesScreen({ rides, pois, loading, error, currentUserId }: Props) {
+export default function RidesScreen({ rides, pois, loading, error, currentUserId, onRefresh }: Props) {
   const poiMap = new Map(pois.map((p) => [p.id, p.name]));
   const deleteRide = useRidesStore((s) => s.deleteRide);
   const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
@@ -70,7 +71,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
     return () => clearInterval(id);
   }, []);
 
-  if (loading) {
+  if (loading && rides.length === 0) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>;
   }
 
@@ -95,6 +96,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
       style={{ backgroundColor: 'transparent' }}
       contentContainerStyle={styles.list}
       stickySectionHeadersEnabled
+      refreshControl={<RefreshControl refreshing={loading && rides.length > 0} onRefresh={onRefresh} tintColor="#3D3530" />}
       renderSectionHeader={({ section }) => (
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -108,9 +110,9 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
         const toName   = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
         const rideInterests = interests.filter((i) => i.rideId === item.id);
         const interestCounts = {
-          pending:  rideInterests.filter((i) => i.status === 0).length,
-          accepted: rideInterests.filter((i) => i.status === 1).length,
-          declined: rideInterests.filter((i) => i.status === 2).length,
+          pending:  rideInterests.filter((i) => i.driverResponse === 0).length,
+          accepted: rideInterests.filter((i) => i.driverResponse === 1).length,
+          declined: rideInterests.filter((i) => i.driverResponse === 2).length,
         };
         return (
           <View>
@@ -121,7 +123,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
               toName={toName}
               timeLabel={text}
               isPast={isPast}
-              interestStatus={interestsByRideId.get(item.id)?.status}
+              interestStatus={resolveInterestDisplayStatus(interestsByRideId.get(item.id))}
               interestCounts={interestCounts}
               onDelete={deleteRide}
               onIgnore={ignoreRide}
