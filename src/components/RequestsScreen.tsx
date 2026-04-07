@@ -40,7 +40,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
     if (interest?.driverResponse !== 1) return; // only accepted requests are expandable
     setExpandedRideId((prev) => (prev === ride.id ? null : ride.id));
     // Pre-fetch ride owner and vehicle when first expanding.
-    ensureUser(ride.userId);
+    if (ride.userId != null) ensureUser(ride.userId);
     if (ride.vehicleId) ensureVehicle(ride.vehicleId);
   }
 
@@ -116,7 +116,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
         const interest = interestsByRideId.get(item.id);
         const isAccepted = interest?.driverResponse === 1;
         const isExpanded = expandedRideId === item.id;
-        const owner = userCache.get(item.userId);
+        const owner = item.userId != null ? userCache.get(item.userId) : undefined;
         const vehicle = item.vehicleId ? vehicleCache.get(item.vehicleId) : undefined;
         const departurePoi = poiById.get(item.departsFrom);
         return (

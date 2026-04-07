@@ -111,10 +111,11 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
         const fromName = poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`;
         const toName   = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
         const rideInterests = interests.filter((i) => i.rideId === item.id);
+        const activeInterests = rideInterests.filter((i) => i.status === 0);
         const interestCounts = {
-          pending:  rideInterests.filter((i) => i.driverResponse === 0).length,
-          accepted: rideInterests.filter((i) => i.driverResponse === 1).length,
-          declined: rideInterests.filter((i) => i.driverResponse === 2).length,
+          pending:  activeInterests.filter((i) => i.driverResponse === 0).length,
+          accepted: activeInterests.filter((i) => i.driverResponse === 1).length,
+          declined: activeInterests.filter((i) => i.driverResponse === 2).length,
         };
         return (
           <View>
@@ -127,19 +128,19 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
               isPast={isPast}
               interestStatus={resolveInterestDisplayStatus(interestsByRideId.get(item.id))}
               interestCounts={interestCounts}
-              onDelete={deleteRide}
+              onDelete={async (id) => { await deleteRide(id); onRefresh(); }}
               onIgnore={ignoreRide}
               onExpressInterest={handleExpressInterest}
               onPress={() => toggleExpand(item.id)}
             />
             {isExpanded && (
               <View style={styles.detailPanel}>
-                {rideInterests.length === 0 ? (
+                {activeInterests.length === 0 ? (
                   <View style={styles.noInterests}>
                     <Text style={styles.noInterestsText}>{t('ride.no_interests')}</Text>
                   </View>
                 ) : (
-                  rideInterests.map((interest, idx) => (
+                  activeInterests.map((interest, idx) => (
                     <View key={interest.id}>
                       {idx > 0 && <View style={styles.interestSeparator} />}
                       <SwipeableRequestRow

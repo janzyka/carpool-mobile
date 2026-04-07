@@ -1,6 +1,7 @@
 {
   "common": {
     "error": "Error",
+    "generic_error": "Something went wrong. Please try again.",
     "cancel": "Cancel",
     "save": "Save",
     "add": "Add",
@@ -17,7 +18,13 @@
   "tabs": {
     "rides": "Rides",
     "requests": "Requests",
+    "asks": "Asks",
     "profile": "Profile"
+  },
+  "asks": {
+    "empty": "No asks yet.",
+    "no_upcoming": "No upcoming asks.",
+    "title": "New Ask"
   },
   "time": {
     "today": "Today",

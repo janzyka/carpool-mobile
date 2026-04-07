@@ -23,6 +23,8 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+import AddAskModal from '../src/components/AddAskModal';
+import AsksScreen from '../src/components/AsksScreen';
 import ProfileScreen from '../src/components/ProfileScreen';
 import RequestsScreen from '../src/components/RequestsScreen';
 import RidesScreen from '../src/components/RidesScreen';
@@ -31,27 +33,31 @@ import { useIgnoredRidesStore } from '../src/store/ignoredRidesStore';
 import { useMyInterestsStore } from '../src/store/myInterestsStore';
 import { usePoiStore } from '../src/store/poiStore';
 import { useRequestsStore } from '../src/store/requestsStore';
+import { useAsksStore } from '../src/store/asksStore';
 import { useRidesStore } from '../src/store/ridesStore';
 import { useVehiclesStore } from '../src/store/vehiclesStore';
 
-type Tab = 'rides' | 'requests' | 'profile';
+type Tab = 'rides' | 'requests' | 'asks' | 'profile';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
 
   const TABS: { id: Tab; label: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'] }[] = [
-    { id: 'rides',    label: t('tabs.rides'),    icon: 'steering'       },
-    { id: 'requests', label: t('tabs.requests'), icon: 'human-handsup'  },
-    { id: 'profile',  label: t('tabs.profile'),  icon: 'account-circle' },
+    { id: 'rides',    label: t('tabs.rides'),    icon: 'steering'            },
+    { id: 'requests', label: t('tabs.requests'), icon: 'human-handsup'       },
+    { id: 'asks',     label: t('tabs.asks'),     icon: 'help-circle-outline' },
+    { id: 'profile',  label: t('tabs.profile'),  icon: 'account-circle'      },
   ];
   const [activeTab, setActiveTab] = useState<Tab>('rides');
   const [showAddRide, setShowAddRide] = useState(false);
+  const [showAddAsk, setShowAddAsk]   = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(false);
   const [dataReady, setDataReady] = useState(false);
   const hasLoaded = useRef(false);
   const current = TABS.find((tab) => tab.id === activeTab)!;
   const { pois, syncPois } = usePoiStore();
   const { rides, loading: ridesLoading, error: ridesError, fetchRides } = useRidesStore();
+  const { asks, loading: asksLoading, error: asksError, fetchAsks } = useAsksStore();
   const { loadIgnored } = useIgnoredRidesStore();
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
   const currentUserId = useAuthStore((s) => s.userId);
@@ -90,6 +96,8 @@ export default function HomeScreen() {
     if (data?.type === 'new_ride') {
       fetchRides();
       if (currentUserId) fetchMyInterests(currentUserId);
+    } else if (data?.type === 'new_ask') {
+      fetchAsks();
     } else if (data?.type === 'new_interest' && currentUserId) {
       fetchRequests(currentUserId);
     } else if (data?.type === 'interest_response' && currentUserId) {
@@ -120,6 +128,7 @@ export default function HomeScreen() {
     const sub = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
         fetchRides();
+        fetchAsks();
         if (currentUserId) {
           fetchMyInterests(currentUserId);
           fetchRequests(currentUserId);
@@ -134,6 +143,7 @@ export default function HomeScreen() {
       await Promise.all([
         syncPois(),
         fetchRides(),
+        fetchAsks(),
         loadIgnored(),
         currentUserId ? fetchMyInterests(currentUserId) : Promise.resolve(),
         currentUserId ? fetchRequests(currentUserId) : Promise.resolve(),
@@ -145,7 +155,7 @@ export default function HomeScreen() {
       }
     };
     load();
-  }, [syncPois, fetchRides, loadIgnored, fetchMyInterests, fetchRequests, fetchVehicles, currentUserId]));
+  }, [syncPois, fetchRides, fetchAsks, loadIgnored, fetchMyInterests, fetchRequests, fetchVehicles, currentUserId]));
 
   if (!dataReady) {
     return (
@@ -170,6 +180,11 @@ export default function HomeScreen() {
               <MaterialCommunityIcons name="plus" size={26} color="#3D3530" />
             </Pressable>
           )}
+          {activeTab === 'asks' && (
+            <Pressable hitSlop={12} onPress={() => setShowAddAsk(true)}>
+              <MaterialCommunityIcons name="plus" size={26} color="#3D3530" />
+            </Pressable>
+          )}
           {activeTab === 'requests' && (
             <Pressable onPress={() => setShowAllRequests((v) => !v)} hitSlop={12}>
               <MaterialCommunityIcons
@@ -182,6 +197,12 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      <AddAskModal
+        visible={showAddAsk}
+        pois={pois}
+        onClose={() => setShowAddAsk(false)}
+        onCreated={() => { setShowAddAsk(false); fetchAsks(); if (currentUserId) fetchMyInterests(currentUserId); }}
+      />
       <AddRideModal
         visible={showAddRide}
         pois={pois}
@@ -198,7 +219,7 @@ export default function HomeScreen() {
             loading={ridesLoading}
             error={ridesError}
             currentUserId={currentUserId}
-            onRefresh={() => { fetchRides(); if (currentUserId) fetchRequests(currentUserId); }}
+            onRefresh={() => { fetchRides(); fetchAsks(); if (currentUserId) fetchRequests(currentUserId); }}
           />
         )}
         {activeTab === 'requests' && (
@@ -212,7 +233,17 @@ export default function HomeScreen() {
             onRefresh={() => { fetchRides(); if (currentUserId) fetchMyInterests(currentUserId); }}
           />
         )}
-        {activeTab === 'profile'  && <ProfileScreen currentUserId={currentUserId} />}
+        {activeTab === 'asks' && (
+          <AsksScreen
+            asks={asks}
+            pois={pois}
+            loading={asksLoading}
+            error={asksError}
+            onRefresh={() => { fetchAsks(); if (currentUserId) fetchMyInterests(currentUserId); }}
+            onClaimed={() => { fetchAsks(); fetchRides(); if (currentUserId) fetchRequests(currentUserId); }}
+          />
+        )}
+        {activeTab === 'profile' && <ProfileScreen currentUserId={currentUserId} />}
       </ImageBackground>
 
       {/* ── Fixed footer tab bar ── */}

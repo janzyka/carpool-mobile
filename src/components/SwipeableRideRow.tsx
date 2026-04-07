@@ -28,15 +28,16 @@ interface Props {
   onUnhide?: (id: number) => void;
   onExpressInterest: (id: number) => void;
   onCancelInterest?: () => void;
+  onClaimAsk?: (id: number) => void;
   onPress?: () => void;
 }
 
 export default function SwipeableRideRow({
-  ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, interestCounts, isHidden, onDelete, onIgnore, onUnhide, onExpressInterest, onCancelInterest, onPress,
+  ride, isOwner, fromName, toName, timeLabel, isPast, interestStatus, interestCounts, isHidden, onDelete, onIgnore, onUnhide, onExpressInterest, onCancelInterest, onClaimAsk, onPress,
 }: Props) {
   const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
-  const driverName = useUserCacheStore((s) => s.cache.get(ride.userId)?.name);
+  const driverName = useUserCacheStore((s) => ride.userId != null ? s.cache.get(ride.userId)?.name : undefined);
 
   const INTEREST_ICONS: Record<number, { name: React.ComponentProps<typeof MaterialCommunityIcons>['name']; color: string; label: string }> = {
     0: { name: 'clock-outline',  color: '#9CA3AF', label: t('interest.status_pending')  },
@@ -69,18 +70,16 @@ export default function SwipeableRideRow({
     );
   }
 
-  function renderInterestAction(progress: Animated.AnimatedInterpolation<number>) {
-    const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  function renderInterestAction() {
     return (
-      <Animated.View style={[styles.interestAction, { opacity }]}>
+      <View style={styles.interestAction}>
         <TouchableOpacity style={styles.actionButton} onPress={() => {
           swipeRef.current?.close();
           onExpressInterest(ride.id);
         }}>
-          {/* One-way sign: white right-pointing arrow on blue */}
           <MaterialCommunityIcons name="arrow-right-bold" size={32} color="#fff" />
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     );
   }
 
@@ -103,6 +102,20 @@ export default function SwipeableRideRow({
           }}
         >
           <MaterialCommunityIcons name="minus-thick" size={28} color="#fff" />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
+  function renderClaimAction(progress: Animated.AnimatedInterpolation<number>) {
+    const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+    return (
+      <Animated.View style={[styles.actionPanel, styles.claimPanel, { opacity }]}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => { swipeRef.current?.close(); onClaimAsk?.(ride.id); }}>
+          <View style={styles.claimIcons}>
+            <MaterialCommunityIcons name="auto-fix" size={22} color="#fff" />
+            <MaterialCommunityIcons name="car-side" size={22} color="#fff" />
+          </View>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -138,7 +151,9 @@ export default function SwipeableRideRow({
         </View>
       ) : (
         <View style={styles.avatarWrapper}>
-          <UserAvatar userId={ride.userId} size={40} />
+          {ride.userId != null
+            ? <UserAvatar userId={ride.userId} size={40} />
+            : <View style={styles.noDriverIcon}><MaterialCommunityIcons name="help-circle-outline" size={32} color="#9CA3AF" /></View>}
         </View>
       )}
       <View style={styles.middle}>
@@ -150,7 +165,7 @@ export default function SwipeableRideRow({
           <Text style={styles.arrow}>→</Text>
           <Text style={styles.poi} numberOfLines={1}>{toName}</Text>
         </View>
-        {!isOwner && interestStatus !== undefined && (() => {
+        {!isOwner && !interestCounts && interestStatus !== undefined && (() => {
           const icon = INTEREST_ICONS[interestStatus];
           return icon ? (
             <View style={styles.statusRow}>
@@ -159,7 +174,7 @@ export default function SwipeableRideRow({
             </View>
           ) : null;
         })()}
-        {isOwner && interestCounts && (interestCounts.pending + interestCounts.accepted + interestCounts.declined) > 0 && (
+        {interestCounts && (interestCounts.pending + interestCounts.accepted + interestCounts.declined) > 0 && (
           <View style={styles.countRow}>
             {interestCounts.pending  > 0 && (
               <View style={styles.countBadge}>
@@ -196,7 +211,7 @@ export default function SwipeableRideRow({
             ? renderInterestAction
             : undefined
         : undefined}
-      renderRightActions={isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
+      renderRightActions={onClaimAsk ? renderClaimAction : isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
       leftThreshold={60}
       rightThreshold={60}
       overshootLeft={false}
@@ -220,6 +235,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     marginRight: 12,
+  },
+  noDriverIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   vehicleIcon: {
     width: 40,
@@ -257,6 +280,14 @@ const styles = StyleSheet.create({
   },
   ignorePanel: {
     backgroundColor: '#9CA3AF',
+  },
+  claimPanel: {
+    backgroundColor: '#7C3AED',
+  },
+  claimIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   unhidePanel: {
     backgroundColor: '#22C55E',

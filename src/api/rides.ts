@@ -2,7 +2,7 @@ import apiClient from './client';
 
 export interface Ride {
   id: number;
-  userId: number;
+  userId: number | null;
   departsFrom: number;
   leadsTo: number;
   departure: string;   // local datetime string: "2024-06-01T08:00:00"
@@ -79,6 +79,48 @@ export async function listRides(): Promise<Ride[]> {
     return data;
   } catch (error: any) {
     console.error('[rides] listRides ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    throw error;
+  }
+}
+
+export async function submitAsk(
+  departsFrom: number,
+  leadsTo: number,
+  departure: Date,
+): Promise<{ id: number }> {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const departureStr = `${departure.getFullYear()}-${pad(departure.getMonth() + 1)}-${pad(departure.getDate())}` +
+    `T${pad(departure.getHours())}:${pad(departure.getMinutes())}:00`;
+  console.log(`[asks] submitAsk → POST /asks (${departsFrom} → ${leadsTo} @ ${departureStr})`);
+  try {
+    const { data } = await apiClient.post<{ id: number }>('/asks', { departsFrom, leadsTo, departure: departureStr });
+    console.log(`[asks] submitAsk ← success (id=${data.id})`);
+    return data;
+  } catch (error: any) {
+    console.error('[asks] submitAsk ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    throw error;
+  }
+}
+
+export async function claimAsk(rideId: number): Promise<void> {
+  console.log(`[asks] claimAsk → PATCH /asks/${rideId}/claim`);
+  try {
+    await apiClient.patch(`/asks/${rideId}/claim`);
+    console.log(`[asks] claimAsk ← success`);
+  } catch (error: any) {
+    console.error('[asks] claimAsk ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    throw error;
+  }
+}
+
+export async function listAsks(): Promise<Ride[]> {
+  console.log('[asks] listAsks → GET /asks');
+  try {
+    const { data } = await apiClient.get<Ride[]>('/asks');
+    console.log(`[asks] listAsks ← success (${data.length} asks)`);
+    return data;
+  } catch (error: any) {
+    console.error('[asks] listAsks ← error', error?.response?.status, error?.response?.data ?? error?.message);
     throw error;
   }
 }

@@ -12,9 +12,12 @@ interface Props {
   fromName?: string;
   toName?: string;
   compact?: boolean;
+  hideContact?: boolean;
+  noLeftAction?: boolean;
   isLoading?: boolean;
   onAccept: (id: number) => void;
   onDecline: (id: number) => void;
+  onCancelInterest?: (id: number) => void;
 }
 
 function JumpingDots({ color }: { color: string }) {
@@ -49,7 +52,7 @@ const dotStyles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3 },
 });
 
-export default function SwipeableRequestRow({ interest, fromName, toName, compact, isLoading, onAccept, onDecline }: Props) {
+export default function SwipeableRequestRow({ interest, fromName, toName, compact, hideContact, noLeftAction, isLoading, onAccept, onDecline, onCancelInterest }: Props) {
   const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
   const cachedUser = useUserCacheStore((s) => s.cache.get(interest.userId));
@@ -77,6 +80,15 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
 
   function renderRightAction(progress: Animated.AnimatedInterpolation<number>) {
     const opacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+    if (onCancelInterest) {
+      return (
+        <Animated.View style={[styles.cancelAction, { opacity }]}>
+          <TouchableOpacity style={styles.actionButton} onPress={() => { close(); onCancelInterest(interest.id); }}>
+            <MaterialCommunityIcons name="close-circle-outline" size={28} color="#fff" />
+          </TouchableOpacity>
+        </Animated.View>
+      );
+    }
     return (
       <Animated.View style={[styles.declineAction, { opacity }]}>
         <TouchableOpacity style={styles.actionButton} onPress={() => { close(); onDecline(interest.id); }}>
@@ -92,7 +104,7 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
   return (
     <Swipeable
       ref={swipeRef}
-      renderLeftActions={renderLeftAction}
+      renderLeftActions={noLeftAction ? undefined : renderLeftAction}
       renderRightActions={renderRightAction}
       leftThreshold={60}
       rightThreshold={60}
@@ -110,30 +122,32 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
                   ? <JumpingDots color={status.color} />
                   : <Text style={[styles.statusBadge, { color: status.color }]}>{status.label}</Text>}
               </View>
-              <View style={styles.contactRow}>
-                <Pressable
-                  style={styles.contactBtn}
-                  onPress={() => {
-                    const phone = cachedUser?.phoneNumber;
-                    if (phone) Linking.openURL(`tel:${phone}`);
-                    else Alert.alert(t('common.no_phone_title'), t('phone.no_passenger'));
-                  }}
-                >
-                  <MaterialCommunityIcons name="phone" size={16} color="#2563EB" />
-                  <Text style={styles.contactLabel}>{t('common.call')}</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.contactBtn}
-                  onPress={() => {
-                    const phone = cachedUser?.phoneNumber?.replace(/\D/g, '');
-                    if (phone) Linking.openURL(`https://wa.me/${phone}`);
-                    else Alert.alert(t('common.no_phone_title'), t('phone.no_passenger'));
-                  }}
-                >
-                  <MaterialCommunityIcons name="whatsapp" size={16} color="#25D366" />
-                  <Text style={styles.contactLabel}>{t('common.whatsapp')}</Text>
-                </Pressable>
-              </View>
+              {!hideContact && (
+                <View style={styles.contactRow}>
+                  <Pressable
+                    style={styles.contactBtn}
+                    onPress={() => {
+                      const phone = cachedUser?.phoneNumber;
+                      if (phone) Linking.openURL(`tel:${phone}`);
+                      else Alert.alert(t('common.no_phone_title'), t('phone.no_passenger'));
+                    }}
+                  >
+                    <MaterialCommunityIcons name="phone" size={16} color="#2563EB" />
+                    <Text style={styles.contactLabel}>{t('common.call')}</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.contactBtn}
+                    onPress={() => {
+                      const phone = cachedUser?.phoneNumber?.replace(/\D/g, '');
+                      if (phone) Linking.openURL(`https://wa.me/${phone}`);
+                      else Alert.alert(t('common.no_phone_title'), t('phone.no_passenger'));
+                    }}
+                  >
+                    <MaterialCommunityIcons name="whatsapp" size={16} color="#25D366" />
+                    <Text style={styles.contactLabel}>{t('common.whatsapp')}</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           </>
         ) : (
@@ -163,6 +177,12 @@ const styles = StyleSheet.create({
   declineAction: {
     width: 80,
     backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelAction: {
+    width: 80,
+    backgroundColor: '#F59E0B',
     justifyContent: 'center',
     alignItems: 'center',
   },

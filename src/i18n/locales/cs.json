@@ -1,6 +1,7 @@
 {
   "common": {
     "error": "Chyba",
+    "generic_error": "Něco se pokazilo. Zkuste to prosím znovu.",
     "cancel": "Zrušit",
     "save": "Uložit",
     "add": "Přidat",
@@ -17,7 +18,13 @@
   "tabs": {
     "rides": "Svezu",
     "requests": "Naskočím",
+    "asks": "Poptávky",
     "profile": "Profil"
+  },
+  "asks": {
+    "empty": "Zatím žádné poptávky.",
+    "no_upcoming": "Žádné nadcházející poptávky.",
+    "title": "Nová poptávka"
   },
   "time": {
     "today": "Dnes",
