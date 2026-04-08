@@ -73,7 +73,8 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
     return (
       <Animated.View style={[styles.acceptAction, { opacity }]}>
         <TouchableOpacity style={styles.actionButton} onPress={() => { close(); onAccept(interest.id); }}>
-          <MaterialCommunityIcons name="arrow-right-bold" size={32} color="#fff" />
+          <MaterialCommunityIcons name="thumb-up" size={24} color="#fff" />
+          <MaterialCommunityIcons name="check-bold" size={18} color="#fff" />
         </TouchableOpacity>
       </Animated.View>
     );

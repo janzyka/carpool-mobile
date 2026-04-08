@@ -205,18 +205,18 @@ export default function SwipeableRideRow({
   return (
     <Swipeable
       ref={swipeRef}
-      renderLeftActions={onClaimAsk
+      renderLeftActions={!isOwner
+        ? interestStatus === 1
+          ? undefined
+          : interestStatus === undefined
+            ? renderInterestAction
+            : undefined
+        : undefined}
+      renderRightActions={onClaimAsk
         ? renderClaimAction
-        : !isOwner
-          ? interestStatus === 1
-            ? undefined
-            : interestStatus === undefined
-              ? renderInterestAction
-              : undefined
-          : undefined}
-      renderRightActions={!isOwner && interestStatus === 1
-        ? renderCancelInterestAction
-        : isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
+        : !isOwner && interestStatus === 1
+          ? renderCancelInterestAction
+          : isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
       leftThreshold={60}
       rightThreshold={60}
       overshootLeft={false}

@@ -1,93 +1,105 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
-import { Ride, createRideInterest, respondToRideInterest } from '../api/rides';
+import { useTranslation } from 'react-i18next';
+import { Ride, cancelRideInterest, claimAsk, createRideInterest } from '../api/rides';
 import { Poi } from '../api/poi';
-import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
-import { useMyInterestsStore } from '../store/myInterestsStore';
-import { useRequestsStore } from '../store/requestsStore';
-import { useRidesStore } from '../store/ridesStore';
-import { useAuthStore } from '../store/authStore';
 import SwipeableRideRow from './SwipeableRideRow';
 import SwipeableRequestRow from './SwipeableRequestRow';
-import { useTranslation } from 'react-i18next';
 import { parseDeparture, formatTime, groupByDate, resolveInterestDisplayStatus } from '../utils/rideUtils';
+import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
+import { useMyInterestsStore } from '../store/myInterestsStore';
+import { useAuthStore } from '../store/authStore';
+import { useAskInterestsStore } from '../store/askInterestsStore';
 
 interface Props {
-  rides: Ride[];
+  asks: Ride[];
   pois: Poi[];
   loading: boolean;
   error: string | null;
-  currentUserId: number | null;
   onRefresh: () => void;
+  onClaimed?: () => void;
 }
 
-
-
-export default function RidesScreen({ rides, pois, loading, error, currentUserId, onRefresh }: Props) {
+export default function AsksScreen({ asks, pois, loading, error, onRefresh, onClaimed }: Props) {
   const { t } = useTranslation();
   const poiMap = new Map(pois.map((p) => [p.id, p.name]));
-  const deleteRide = useRidesStore((s) => s.deleteRide);
   const { ignoredIds, ignoreRide } = useIgnoredRidesStore();
   const interestsByRideId = useMyInterestsStore((s) => s.byRideId);
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
-  const { interests, fetchRequests } = useRequestsStore();
-  const authUserId = useAuthStore((s) => s.userId);
-
+  const currentUserId = useAuthStore((s) => s.userId);
+  const askInterestsByRideId = useAskInterestsStore((s) => s.byRideId);
+  const askLoadingRideIds = useAskInterestsStore((s) => s.loadingRideIds);
+  const fetchForAsk = useAskInterestsStore((s) => s.fetchForAsk);
+  const invalidateAsk = useAskInterestsStore((s) => s.invalidateAsk);
   const [expandedRideIds, setExpandedRideIds] = useState<Set<number>>(new Set());
-  const [loadingInterestIds, setLoadingInterestIds] = useState<Set<number>>(new Set());
 
-  // Auto-expand rides that have at least one pending or accepted active interest.
+  // Auto-expand all asks when the list loads or refreshes.
   useEffect(() => {
-    const autoExpand = new Set(
-      interests
-        .filter((i) => i.status === 0 && (i.driverResponse === 0 || i.driverResponse === 1))
-        .map((i) => i.rideId)
-    );
-    setExpandedRideIds(autoExpand);
-  }, [interests]);
+    setExpandedRideIds(new Set(asks.map((a) => a.id)));
+  }, [asks]);
 
   function toggleExpand(rideId: number) {
     setExpandedRideIds((prev) => {
       const next = new Set(prev);
-      if (next.has(rideId)) next.delete(rideId); else next.add(rideId);
+      if (next.has(rideId)) {
+        next.delete(rideId);
+      } else {
+        fetchForAsk(rideId);
+        next.add(rideId);
+      }
       return next;
     });
-  }
-
-  async function handleRespond(interestId: number, accepted: boolean) {
-    setLoadingInterestIds((prev) => new Set([...prev, interestId]));
-    try {
-      await respondToRideInterest(interestId, accepted);
-      if (authUserId) fetchRequests(authUserId);
-    } catch {
-      Alert.alert('Error', 'Could not update the request. Please try again.');
-    } finally {
-      setLoadingInterestIds((prev) => { const next = new Set(prev); next.delete(interestId); return next; });
-    }
   }
 
   async function handleExpressInterest(rideId: number) {
     try {
       await createRideInterest(rideId);
       if (currentUserId) fetchMyInterests(currentUserId);
-      Alert.alert('Requested', 'Your interest has been sent to the driver.');
+      invalidateAsk(rideId);
+      fetchForAsk(rideId);
     } catch (error: any) {
       if (error?.response?.status === 409) {
-        Alert.alert('Already requested', 'You have already expressed interest in this ride.');
+        Alert.alert(t('interest.already_title'), t('interest.already_message'));
       } else {
-        Alert.alert('Error', 'Could not send your request. Please try again.');
+        Alert.alert(t('common.error'), t('common.generic_error'));
       }
     }
   }
 
-  // Re-render every 30 s so departure labels and the >5-min filter stay live.
+  async function handleClaimAsk(rideId: number) {
+    try {
+      await claimAsk(rideId);
+      onClaimed?.();
+    } catch {
+      Alert.alert(t('common.error'), t('common.generic_error'));
+    }
+  }
+
+  async function handleCancelInterest(interestId: number, rideId: number) {
+    try {
+      await cancelRideInterest(interestId);
+      if (currentUserId) fetchMyInterests(currentUserId);
+      invalidateAsk(rideId);
+      fetchForAsk(rideId);
+      onRefresh();
+    } catch {
+      Alert.alert(t('common.error'), t('common.generic_error'));
+    }
+  }
+
+  // Pre-fetch interests for all visible asks so counts are available without expanding.
+  useEffect(() => {
+    asks.forEach((ask) => fetchForAsk(ask.id));
+  }, [asks]);
+
+  // Re-render every 30 s so departure labels stay live.
   const [, setTick] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 30_000);
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
     return () => clearInterval(id);
   }, []);
 
-  if (loading && rides.length === 0) {
+  if (loading && asks.length === 0) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>;
   }
 
@@ -95,24 +107,22 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
     return <View style={styles.center}><Text style={styles.errorText}>{error}</Text></View>;
   }
 
-  const filteredRides = rides
-    .filter((r) => !ignoredIds.has(r.id))
-    .filter((r) => r.userId === currentUserId);
+  const filtered = asks.filter((r) => !ignoredIds.has(r.id));
 
-  if (filteredRides.length === 0) {
+  if (filtered.length === 0) {
     return (
       <ScrollView
         contentContainerStyle={styles.center}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor="#3D3530" />}
       >
         <View style={styles.emptyBadge}>
-          <Text style={styles.emptyText}>{t('ride.no_upcoming')}</Text>
+          <Text style={styles.emptyText}>{t('asks.no_upcoming')}</Text>
         </View>
       </ScrollView>
     );
   }
 
-  const sections = groupByDate(filteredRides);
+  const sections = groupByDate(filtered);
 
   return (
     <SectionList
@@ -121,7 +131,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
       style={{ backgroundColor: 'transparent' }}
       contentContainerStyle={styles.list}
       stickySectionHeadersEnabled
-      refreshControl={<RefreshControl refreshing={loading && rides.length > 0} onRefresh={onRefresh} tintColor="#3D3530" />}
+      refreshControl={<RefreshControl refreshing={loading && asks.length > 0} onRefresh={onRefresh} tintColor="#3D3530" />}
       renderSectionHeader={({ section }) => (
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -130,53 +140,64 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       renderItem={({ item }) => {
         const { text, isPast } = formatTime(parseDeparture(item.departure));
+        const fromName   = poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`;
+        const toName     = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
         const isExpanded = expandedRideIds.has(item.id);
-        const fromName = poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`;
-        const toName   = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
-        const rideInterests = interests.filter((i) => i.rideId === item.id);
-        const activeInterests = rideInterests.filter((i) => i.status === 0);
-        const interestCounts = {
-          pending:  activeInterests.filter((i) => i.driverResponse === 0).length,
-          accepted: activeInterests.filter((i) => i.driverResponse === 1).length,
-          declined: activeInterests.filter((i) => i.driverResponse === 2).length,
-        };
+        // myInterestsStore used only for left-swipe control (express interest vs pending)
+        const rawInterest    = interestsByRideId.get(item.id);
+        const myInterest     = (rawInterest && rawInterest.status !== 1) ? rawInterest : undefined;
+        const interestStatus = resolveInterestDisplayStatus(myInterest);
+        // askInterestsStore: all interests from all users (loaded on expand or pre-fetch)
+        const allInterests       = (askInterestsByRideId.get(item.id) ?? []).filter((i) => i.status !== 1);
+        const isLoadingInterests = askLoadingRideIds.has(item.id);
+        const interestCounts = askInterestsByRideId.has(item.id) ? {
+          pending:  allInterests.filter((i) => i.driverResponse === 0).length,
+          accepted: allInterests.filter((i) => i.driverResponse === 1).length,
+          declined: allInterests.filter((i) => i.driverResponse === 2).length,
+        } : undefined;
         return (
           <View>
             <SwipeableRideRow
               ride={item}
-              isOwner={item.userId === currentUserId}
+              isOwner={false}
               fromName={fromName}
               toName={toName}
               timeLabel={text}
               isPast={isPast}
-              interestStatus={resolveInterestDisplayStatus(interestsByRideId.get(item.id))}
+              interestStatus={interestStatus}
               interestCounts={interestCounts}
-              onDelete={async (id) => { await deleteRide(id); onRefresh(); }}
+              onDelete={() => {}}
               onIgnore={ignoreRide}
               onExpressInterest={handleExpressInterest}
+              onClaimAsk={handleClaimAsk}
               onPress={() => toggleExpand(item.id)}
             />
             {isExpanded && (
               <View style={styles.detailPanel}>
-                {activeInterests.length === 0 ? (
-                  <View style={styles.noInterests}>
-                    <Text style={styles.noInterestsText}>{t('ride.no_interests')}</Text>
-                  </View>
-                ) : (
-                  activeInterests.map((interest, idx) => (
+                {isLoadingInterests ? (
+                  <ActivityIndicator size="small" color="#6B7280" style={styles.panelLoader} />
+                ) : allInterests.length > 0 ? (
+                  allInterests.map((interest, idx) => (
                     <View key={interest.id}>
                       {idx > 0 && <View style={styles.interestSeparator} />}
                       <SwipeableRequestRow
                         interest={interest}
                         compact
-                        isLoading={loadingInterestIds.has(interest.id)}
-                        noLeftAction={interest.driverResponse === 1}
-                        noRightAction={interest.driverResponse === 2}
-                        onAccept={(id) => handleRespond(id, true)}
-                        onDecline={(id) => handleRespond(id, false)}
+                        hideContact
+                        noLeftAction
+                        isLoading={false}
+                        onAccept={() => {}}
+                        onDecline={() => {}}
+                        onCancelInterest={interest.userId === currentUserId
+                          ? (id) => handleCancelInterest(id, item.id)
+                          : undefined}
                       />
                     </View>
                   ))
+                ) : (
+                  <View style={styles.noInterests}>
+                    <Text style={styles.noInterestsText}>{t('ride.no_interests')}</Text>
+                  </View>
                 )}
               </View>
             )}
@@ -197,9 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   emptyText: { fontSize: 15, color: '#6B7280' },
-
   list: { paddingBottom: 16 },
-
   sectionHeader: {
     backgroundColor: 'rgba(243,244,246,0.88)',
     paddingHorizontal: 16,
@@ -208,9 +227,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' },
-
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E7EB', marginHorizontal: 16 },
-
   detailPanel: {
     backgroundColor: '#E9EAEC',
     borderLeftWidth: 4,
@@ -222,5 +239,6 @@ const styles = StyleSheet.create({
   },
   noInterests: { paddingVertical: 14, alignItems: 'center' },
   noInterestsText: { fontSize: 14, color: '#9CA3AF' },
+  panelLoader: { marginVertical: 14 },
   interestSeparator: { height: StyleSheet.hairlineWidth, backgroundColor: '#D1D5DB', marginHorizontal: 16 },
 });

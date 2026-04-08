@@ -177,7 +177,9 @@ export default function ProfileScreen({ currentUserId }: Props) {
       {vehiclesLoading && vehicles.length === 0 ? (
         <ActivityIndicator size="small" color="#3D3530" style={{ marginTop: 12 }} />
       ) : vehicles.length === 0 ? (
-        <Text style={styles.emptyVehicles}>{t('profile.no_vehicles')}</Text>
+        <View style={styles.emptyVehiclesBadge}>
+          <Text style={styles.emptyVehicles}>{t('profile.no_vehicles')}</Text>
+        </View>
       ) : (
         vehicles.map((v) => {
           const iconUri = v.icon ? `data:image/jpeg;base64,${v.icon}` : null;
@@ -225,7 +227,8 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginTop: 32, marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#3D3530' },
   addButton: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#3D3530', justifyContent: 'center', alignItems: 'center' },
-  emptyVehicles: { fontSize: 14, color: '#9CA3AF', alignSelf: 'flex-start', marginTop: 4 },
+  emptyVehiclesBadge: { backgroundColor: 'rgba(255,255,255,0.92)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, alignSelf: 'flex-start', marginTop: 4 },
+  emptyVehicles: { fontSize: 14, color: '#6B7280' },
   swipeableContainer: { alignSelf: 'stretch' },
   vehicleRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12, padding: 12, marginBottom: 8, gap: 12 },
   deleteAction: { width: 72, marginBottom: 8, borderRadius: 12, overflow: 'hidden' },
