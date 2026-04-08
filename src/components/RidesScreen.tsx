@@ -33,11 +33,25 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
   const { interests, fetchRequests } = useRequestsStore();
   const authUserId = useAuthStore((s) => s.userId);
 
-  const [expandedRideId, setExpandedRideId] = useState<number | null>(null);
+  const [expandedRideIds, setExpandedRideIds] = useState<Set<number>>(new Set());
   const [loadingInterestIds, setLoadingInterestIds] = useState<Set<number>>(new Set());
 
+  // Auto-expand rides that have at least one pending or accepted active interest.
+  useEffect(() => {
+    const autoExpand = new Set(
+      interests
+        .filter((i) => i.status === 0 && (i.driverResponse === 0 || i.driverResponse === 1))
+        .map((i) => i.rideId)
+    );
+    setExpandedRideIds(autoExpand);
+  }, [interests]);
+
   function toggleExpand(rideId: number) {
-    setExpandedRideId((prev) => (prev === rideId ? null : rideId));
+    setExpandedRideIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rideId)) next.delete(rideId); else next.add(rideId);
+      return next;
+    });
   }
 
   async function handleRespond(interestId: number, accepted: boolean) {
@@ -107,7 +121,7 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       renderItem={({ item }) => {
         const { text, isPast } = formatTime(parseDeparture(item.departure));
-        const isExpanded = expandedRideId === item.id;
+        const isExpanded = expandedRideIds.has(item.id);
         const fromName = poiMap.get(item.departsFrom) ?? `POI ${item.departsFrom}`;
         const toName   = poiMap.get(item.leadsTo)    ?? `POI ${item.leadsTo}`;
         const rideInterests = interests.filter((i) => i.rideId === item.id);
@@ -147,6 +161,8 @@ export default function RidesScreen({ rides, pois, loading, error, currentUserId
                         interest={interest}
                         compact
                         isLoading={loadingInterestIds.has(interest.id)}
+                        noLeftAction={interest.driverResponse === 1}
+                        noRightAction={interest.driverResponse === 2}
                         onAccept={(id) => handleRespond(id, true)}
                         onDecline={(id) => handleRespond(id, false)}
                       />

@@ -33,13 +33,33 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
   const { ensureUser, cache: userCache } = useUserCacheStore();
   const { vehicleCache, ensureVehicle } = useVehiclesStore();
 
-  const [expandedRideId, setExpandedRideId] = useState<number | null>(null);
+  const [expandedRideIds, setExpandedRideIds] = useState<Set<number>>(new Set());
+
+  // Auto-expand all accepted requests whenever the interest map changes.
+  useEffect(() => {
+    const accepted = new Set(
+      [...interestsByRideId.entries()]
+        .filter(([, i]) => i.driverResponse === 1)
+        .map(([rideId]) => rideId)
+    );
+    // Pre-fetch owner + vehicle for newly accepted rides.
+    accepted.forEach((rideId) => {
+      const ride = rides.find((r) => r.id === rideId);
+      if (ride?.userId != null) ensureUser(ride.userId);
+      if (ride?.vehicleId) ensureVehicle(ride.vehicleId);
+    });
+    setExpandedRideIds(accepted);
+  }, [interestsByRideId]);
 
   function toggleExpand(ride: Ride) {
     const interest = interestsByRideId.get(ride.id);
     if (interest?.driverResponse !== 1) return; // only accepted requests are expandable
-    setExpandedRideId((prev) => (prev === ride.id ? null : ride.id));
-    // Pre-fetch ride owner and vehicle when first expanding.
+    setExpandedRideIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ride.id)) next.delete(ride.id); else next.add(ride.id);
+      return next;
+    });
+    // Pre-fetch ride owner and vehicle when manually expanding.
     if (ride.userId != null) ensureUser(ride.userId);
     if (ride.vehicleId) ensureVehicle(ride.vehicleId);
   }
@@ -56,7 +76,7 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
     if (!interest) return;
     try {
       await cancelRideInterest(interest.id);
-      setExpandedRideId(null);
+      setExpandedRideIds((prev) => { const next = new Set(prev); next.delete(rideId); return next; });
       if (currentUserId) fetchMyInterests(currentUserId);
     } catch (error: any) {
       Alert.alert(t('common.error'), t('interest.cancel_error'));
@@ -115,12 +135,12 @@ export default function RequestsScreen({ rides, pois, loading, error, currentUse
         const { text, isPast } = formatTime(parseDeparture(item.departure));
         const interest = interestsByRideId.get(item.id);
         const isAccepted = interest?.driverResponse === 1;
-        const isExpanded = expandedRideId === item.id;
+        const isExpanded = expandedRideIds.has(item.id);
         const owner = item.userId != null ? userCache.get(item.userId) : undefined;
         const vehicle = item.vehicleId ? vehicleCache.get(item.vehicleId) : undefined;
         const departurePoi = poiById.get(item.departsFrom);
         return (
-          <View>
+          <View style={isAccepted && styles.acceptedRow}>
             <SwipeableRideRow
               ride={item}
               isOwner={false}
@@ -221,6 +241,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E7EB', marginHorizontal: 16 },
+  acceptedRow: { backgroundColor: '#F0FDF4' },
 
   detailPanel: {
     backgroundColor: '#E9EAEC',

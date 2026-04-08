@@ -77,7 +77,8 @@ export default function SwipeableRideRow({
           swipeRef.current?.close();
           onExpressInterest(ride.id);
         }}>
-          <MaterialCommunityIcons name="arrow-right-bold" size={32} color="#fff" />
+          <MaterialCommunityIcons name="thumb-up" size={24} color="#fff" />
+          <MaterialCommunityIcons name="check-bold" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
     );
@@ -204,14 +205,18 @@ export default function SwipeableRideRow({
   return (
     <Swipeable
       ref={swipeRef}
-      renderLeftActions={!isOwner
-        ? interestStatus === 1
-          ? renderCancelInterestAction
-          : interestStatus === undefined
-            ? renderInterestAction
-            : undefined
-        : undefined}
-      renderRightActions={onClaimAsk ? renderClaimAction : isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
+      renderLeftActions={onClaimAsk
+        ? renderClaimAction
+        : !isOwner
+          ? interestStatus === 1
+            ? undefined
+            : interestStatus === undefined
+              ? renderInterestAction
+              : undefined
+          : undefined}
+      renderRightActions={!isOwner && interestStatus === 1
+        ? renderCancelInterestAction
+        : isOwner ? renderDeleteAction : isHidden ? renderUnhideAction : renderIgnoreAction}
       leftThreshold={60}
       rightThreshold={60}
       overshootLeft={false}

@@ -176,13 +176,13 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>{current.label}</Text>
         <View style={styles.headerSide}>
           {activeTab === 'rides' && (
-            <Pressable onPress={() => setShowAddRide(true)} hitSlop={12}>
-              <MaterialCommunityIcons name="plus" size={26} color="#3D3530" />
+            <Pressable onPress={() => setShowAddRide(true)} hitSlop={12} style={styles.addButton}>
+              <MaterialCommunityIcons name="plus" size={22} color="#fff" />
             </Pressable>
           )}
           {activeTab === 'asks' && (
-            <Pressable hitSlop={12} onPress={() => setShowAddAsk(true)}>
-              <MaterialCommunityIcons name="plus" size={26} color="#3D3530" />
+            <Pressable hitSlop={12} onPress={() => setShowAddAsk(true)} style={styles.addButton}>
+              <MaterialCommunityIcons name="plus" size={22} color="#fff" />
             </Pressable>
           )}
           {activeTab === 'requests' && (
@@ -292,7 +292,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
-  headerSide: { width: 40 },
+  headerSide: { width: 40, alignItems: 'flex-end' },
+  addButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#3D3530',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerTitle: {
     flex: 1,
     textAlign: 'center',

@@ -14,6 +14,7 @@ interface Props {
   compact?: boolean;
   hideContact?: boolean;
   noLeftAction?: boolean;
+  noRightAction?: boolean;
   isLoading?: boolean;
   onAccept: (id: number) => void;
   onDecline: (id: number) => void;
@@ -52,7 +53,7 @@ const dotStyles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3 },
 });
 
-export default function SwipeableRequestRow({ interest, fromName, toName, compact, hideContact, noLeftAction, isLoading, onAccept, onDecline, onCancelInterest }: Props) {
+export default function SwipeableRequestRow({ interest, fromName, toName, compact, hideContact, noLeftAction, noRightAction, isLoading, onAccept, onDecline, onCancelInterest }: Props) {
   const { t } = useTranslation();
   const swipeRef = useRef<Swipeable>(null);
   const cachedUser = useUserCacheStore((s) => s.cache.get(interest.userId));
@@ -105,7 +106,7 @@ export default function SwipeableRequestRow({ interest, fromName, toName, compac
     <Swipeable
       ref={swipeRef}
       renderLeftActions={noLeftAction ? undefined : renderLeftAction}
-      renderRightActions={renderRightAction}
+      renderRightActions={noRightAction ? undefined : renderRightAction}
       leftThreshold={60}
       rightThreshold={60}
       overshootLeft={false}
