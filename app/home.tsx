@@ -27,6 +27,7 @@ import AddAskModal from '../src/components/AddAskModal';
 import AsksScreen from '../src/components/AsksScreen';
 import ProfileScreen from '../src/components/ProfileScreen';
 import RequestsScreen from '../src/components/RequestsScreen';
+import RidesMapView from '../src/components/RidesMapView';
 import RidesScreen from '../src/components/RidesScreen';
 import { useAuthStore } from '../src/store/authStore';
 import { useIgnoredRidesStore } from '../src/store/ignoredRidesStore';
@@ -52,6 +53,7 @@ export default function HomeScreen() {
   const [showAddRide, setShowAddRide] = useState(false);
   const [showAddAsk, setShowAddAsk]   = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(false);
+  const [showRequestsMap, setShowRequestsMap] = useState(false);
   const [dataReady, setDataReady] = useState(false);
   const hasLoaded = useRef(false);
   const current = TABS.find((tab) => tab.id === activeTab)!;
@@ -186,13 +188,22 @@ export default function HomeScreen() {
             </Pressable>
           )}
           {activeTab === 'requests' && (
-            <Pressable onPress={() => setShowAllRequests((v) => !v)} hitSlop={12}>
-              <MaterialCommunityIcons
-                name={showAllRequests ? 'filter-off-outline' : 'filter-outline'}
-                size={24}
-                color={showAllRequests ? '#2563EB' : '#3D3530'}
-              />
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+              <Pressable onPress={() => setShowAllRequests((v) => !v)} hitSlop={12}>
+                <MaterialCommunityIcons
+                  name={showAllRequests ? 'filter-off-outline' : 'filter-outline'}
+                  size={24}
+                  color={showAllRequests ? '#2563EB' : '#3D3530'}
+                />
+              </Pressable>
+              <Pressable onPress={() => setShowRequestsMap((v) => !v)} hitSlop={12}>
+                <MaterialCommunityIcons
+                  name={showRequestsMap ? 'format-list-bulleted' : 'map-outline'}
+                  size={24}
+                  color={showRequestsMap ? '#2563EB' : '#3D3530'}
+                />
+              </Pressable>
+            </View>
           )}
         </View>
       </View>
@@ -222,7 +233,7 @@ export default function HomeScreen() {
             onRefresh={() => { fetchRides(); fetchAsks(); if (currentUserId) fetchRequests(currentUserId); }}
           />
         )}
-        {activeTab === 'requests' && (
+        {activeTab === 'requests' && !showRequestsMap && (
           <RequestsScreen
             rides={rides}
             pois={pois}
@@ -231,6 +242,14 @@ export default function HomeScreen() {
             currentUserId={currentUserId}
             showAll={showAllRequests}
             onRefresh={() => { fetchRides(); if (currentUserId) fetchMyInterests(currentUserId); }}
+          />
+        )}
+        {activeTab === 'requests' && showRequestsMap && (
+          <RidesMapView
+            rides={rides}
+            pois={pois}
+            currentUserId={currentUserId}
+            showAll={showAllRequests}
           />
         )}
         {activeTab === 'asks' && (
