@@ -9,6 +9,7 @@ interface PoiState {
   loading: boolean;
   error: string | null;
   syncPois: () => Promise<void>;
+  addPoi: (poi: Poi) => void;
 }
 
 export const usePoiStore = create<PoiState>((set, get) => ({
@@ -16,6 +17,8 @@ export const usePoiStore = create<PoiState>((set, get) => ({
   fetchedAt: null,
   loading: false,
   error: null,
+
+  addPoi: (poi) => set((state) => ({ pois: [...state.pois, poi] })),
 
   syncPois: async () => {
     const { fetchedAt, loading } = get();

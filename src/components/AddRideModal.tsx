@@ -5,11 +5,11 @@ import {
   StyleSheet, Text, TouchableWithoutFeedback, View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { submitRide } from '../api/rides';
 import { Poi } from '../api/poi';
 import { useVehiclesStore } from '../store/vehiclesStore';
+import MapPoiPicker from './MapPoiPicker';
 
 interface Props {
   visible: boolean;
@@ -32,6 +32,7 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
   const [to, setTo]     = useState<Poi | null>(null);
   const [departure, setDeparture] = useState<Date>(defaultDeparture);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
+  const [mapTarget, setMapTarget] = useState<PickerTarget>(null);
   const [dateMode, setDateMode] = useState<'date' | 'time'>('date');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -45,6 +46,7 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
     setTo(null);
     setDeparture(defaultDeparture());
     setPickerTarget(null);
+    setMapTarget(null);
     setShowDatePicker(false);
     setSubmitting(false);
     setSelectedVehicle(null);
@@ -96,19 +98,29 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
 
         {/* From */}
         <Text style={styles.label}>{t('add_ride.from_label')}</Text>
-        <Pressable style={styles.selector} onPress={() => setPickerTarget('from')}>
-          <Text style={from ? styles.selectorValue : styles.selectorPlaceholder}>
-            {from?.name ?? t('add_ride.from_placeholder')}
-          </Text>
-        </Pressable>
+        <View style={styles.selectorRow}>
+          <Pressable style={[styles.selector, styles.selectorFlex]} onPress={() => setPickerTarget('from')}>
+            <Text style={from ? styles.selectorValue : styles.selectorPlaceholder}>
+              {from?.name ?? t('add_ride.from_placeholder')}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.mapIconBtn} onPress={() => setMapTarget('from')}>
+            <MaterialCommunityIcons name="map-marker-outline" size={24} color="#2563EB" />
+          </Pressable>
+        </View>
 
         {/* To */}
         <Text style={styles.label}>{t('add_ride.to_label')}</Text>
-        <Pressable style={styles.selector} onPress={() => setPickerTarget('to')}>
-          <Text style={to ? styles.selectorValue : styles.selectorPlaceholder}>
-            {to?.name ?? t('add_ride.to_placeholder')}
-          </Text>
-        </Pressable>
+        <View style={styles.selectorRow}>
+          <Pressable style={[styles.selector, styles.selectorFlex]} onPress={() => setPickerTarget('to')}>
+            <Text style={to ? styles.selectorValue : styles.selectorPlaceholder}>
+              {to?.name ?? t('add_ride.to_placeholder')}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.mapIconBtn} onPress={() => setMapTarget('to')}>
+            <MaterialCommunityIcons name="map-marker-outline" size={24} color="#2563EB" />
+          </Pressable>
+        </View>
 
         {/* Departure */}
         <Text style={styles.label}>{t('add_ride.departure_label')}</Text>
@@ -173,6 +185,14 @@ export default function AddRideModal({ visible, pois, onClose, onCreated }: Prop
         </Modal>
       )}
 
+      {/* Map POI picker */}
+      <MapPoiPicker
+        visible={mapTarget !== null}
+        pois={pois}
+        onSelect={(poi) => { mapTarget === 'from' ? setFrom(poi) : setTo(poi); setMapTarget(null); }}
+        onClose={() => setMapTarget(null)}
+      />
+
       {/* POI picker sheet */}
       {pickerTarget !== null && (
         <Modal visible animationType="slide" transparent onRequestClose={() => setPickerTarget(null)}>
@@ -222,6 +242,9 @@ const styles = StyleSheet.create({
   selectorValue:       { fontSize: 15, color: '#111827' },
   selectorPlaceholder: { fontSize: 15, color: '#9CA3AF' },
 
+  selectorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  selectorFlex: { flex: 1 },
+  mapIconBtn: { padding: 10, backgroundColor: '#EFF6FF', borderRadius: 10, borderWidth: 1, borderColor: '#BFDBFE' },
   dateRow:  { flexDirection: 'row', gap: 10 },
   dateCell: { flex: 2 },
   timeCell: { flex: 1 },

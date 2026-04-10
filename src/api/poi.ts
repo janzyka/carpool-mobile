@@ -18,3 +18,9 @@ export async function fetchPois(): Promise<Poi[]> {
     throw error;
   }
 }
+
+
+export async function createPoi(name: string, latitude: number, longitude: number): Promise<Poi> {
+  const { data } = await apiClient.post<{ id: number }>('/poi', { name, latitude, longitude });
+  return { id: data.id, name, latitude, longitude };
+}

@@ -1,4 +1,5 @@
 import apiClient from './client';
+import * as Localization from 'expo-localization';
 
 export interface RegisterResponse {
   id: number;
@@ -17,9 +18,11 @@ export async function registerUser(
 ): Promise<RegisterResponse> {
   console.log('[auth] registerUser → POST /users', { name, phoneNumber, hasIcon: !!icon });
   try {
+    const locale = Localization.getLocales()[0]?.languageCode ?? 'en';
     const { data } = await apiClient.post<RegisterResponse>('/users', {
       name,
       phoneNumber,
+      locale,
       ...(icon ? { icon } : {}),
     });
     console.log('[auth] registerUser ← success', data);

@@ -17,12 +17,18 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.zykyc.carpool",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "Your location is used to centre the map when selecting a pickup or drop-off point."
       }
     },
     "android": {
       "package": "com.zykyc.carpool",
       "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBl_wV3EsMmujU-jpuvWW_q5lN9FfisVWs"
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -44,6 +50,10 @@
       "eas": {
         "projectId": "ace7f8d3-7406-4001-b0b6-4afbfd53ba26"
       }
+    },
+    "locales": {
+      "en": "./locales/en.json",
+      "cs": "./locales/cs.json"
     },
     "owner": "zykyc"
   }
