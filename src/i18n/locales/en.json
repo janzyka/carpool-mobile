@@ -73,6 +73,7 @@
     "save_error": "Could not save your profile. Please try again.",
     "vehicles_title": "Vehicles",
     "no_vehicles": "No vehicles yet. Tap + to add one.",
+    "privacy_policy": "Privacy Policy",
     "delete_vehicle_title": "Delete vehicle",
     "delete_vehicle_message": "Remove \"{{name}}\"?",
     "delete_confirm": "Delete",

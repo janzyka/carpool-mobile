@@ -55,6 +55,7 @@
       "en": "./locales/en.json",
       "cs": "./locales/cs.json"
     },
+    "privacyPolicyUrl": "https://janzyka.github.io/carpool-mobile/privacy-policy",
     "owner": "zykyc"
   }
 }

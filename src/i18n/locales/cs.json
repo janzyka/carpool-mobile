@@ -74,6 +74,7 @@
     "save_error": "Profil se nepodařilo uložit. Zkuste to znovu.",
     "vehicles_title": "Vozidla",
     "no_vehicles": "Žádná vozidla. Klepněte na + pro přidání.",
+    "privacy_policy": "Zásady ochrany osobních údajů",
     "delete_vehicle_title": "Smazat vozidlo",
     "delete_vehicle_message": "Odebrat \"{{name}}\"?",
     "delete_confirm": "Smazat",

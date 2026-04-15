@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import * as Linking from 'expo-linking';
 import { useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import {
@@ -215,6 +216,13 @@ export default function ProfileScreen({ currentUserId }: Props) {
         onClose={() => setShowAddVehicle(false)}
         onCreated={() => setShowAddVehicle(false)}
       />
+
+      <Pressable
+        style={styles.privacyLink}
+        onPress={() => Linking.openURL('https://janzyka.github.io/carpool-mobile/privacy-policy')}
+      >
+        <Text style={styles.privacyLinkText}>{t('profile.privacy_policy')}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -227,6 +235,8 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginTop: 32, marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#3D3530' },
   addButton: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#3D3530', justifyContent: 'center', alignItems: 'center' },
+  privacyLink: { alignItems: 'center', paddingVertical: 20 },
+  privacyLinkText: { fontSize: 13, color: '#9CA3AF', textDecorationLine: 'underline' },
   emptyVehiclesBadge: { backgroundColor: 'rgba(255,255,255,0.92)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, alignSelf: 'flex-start', marginTop: 4 },
   emptyVehicles: { fontSize: 14, color: '#6B7280' },
   swipeableContainer: { alignSelf: 'stretch' },
