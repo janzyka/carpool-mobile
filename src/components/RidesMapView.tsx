@@ -6,6 +6,8 @@ import { Ride, createRideInterest } from '../api/rides';
 import { Poi } from '../api/poi';
 import { useIgnoredRidesStore } from '../store/ignoredRidesStore';
 import { useMyInterestsStore } from '../store/myInterestsStore';
+import { useUserCacheStore } from '../store/userCacheStore';
+import UserAvatar from './UserAvatar';
 import { parseDeparture, formatTime } from '../utils/rideUtils';
 
 interface Props {
@@ -64,7 +66,14 @@ export default function RidesMapView({ rides, pois, currentUserId, showAll }: Pr
   const [selected, setSelected] = useState<Ride | null>(null);
   const { ignoredIds } = useIgnoredRidesStore();
   const fetchMyInterests = useMyInterestsStore((s) => s.fetchMyInterests);
+  const ensureUser = useUserCacheStore((s) => s.ensureUser);
+  const driverName = useUserCacheStore((s) => selected?.userId != null ? s.cache.get(selected.userId)?.name : undefined);
   const poiById = new Map(pois.map((p) => [p.id, p]));
+
+  // Fetch driver info when a ride is selected.
+  useEffect(() => {
+    if (selected?.userId != null) ensureUser(selected.userId);
+  }, [selected?.userId]);
 
   const now = Date.now();
   const mappable = rides
@@ -142,6 +151,12 @@ export default function RidesMapView({ rides, pois, currentUserId, showAll }: Pr
           <Pressable style={styles.panelClose} onPress={() => setSelected(null)} hitSlop={12}>
             <MaterialCommunityIcons name="close" size={20} color="#6B7280" />
           </Pressable>
+          {selected.userId != null && (
+            <View style={styles.panelDriver}>
+              <UserAvatar userId={selected.userId} size={36} />
+              {driverName && <Text style={styles.panelDriverName}>{driverName}</Text>}
+            </View>
+          )}
           <View style={styles.panelRoute}>
             <Text style={styles.panelPoi} numberOfLines={1}>{selFrom.name}</Text>
             <MaterialCommunityIcons name="arrow-right" size={16} color="#6B7280" />
@@ -180,6 +195,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.08, shadowRadius: 8,
   },
+  panelDriver: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  panelDriverName: { fontSize: 14, fontWeight: '600', color: '#111827' },
   panelRoute: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   panelPoi: { flex: 1, fontSize: 15, fontWeight: '700', color: '#111827' },
   panelTime: { fontSize: 14, color: '#2563EB', fontWeight: '600', marginBottom: 14 },
