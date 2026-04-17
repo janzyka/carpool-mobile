@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -33,11 +34,15 @@ export default function RegisterScreen() {
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
-      base64: true,
+      quality: 1,
     });
-    if (!result.canceled && result.assets[0].base64) {
-      setIcon(result.assets[0].base64);
+    if (!result.canceled) {
+      const compressed = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [{ resize: { width: 400, height: 400 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+      );
+      if (compressed.base64) setIcon(compressed.base64);
     }
   };
 
