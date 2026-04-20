@@ -8,19 +8,19 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "API_URL": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev"
+        "EXPO_PUBLIC_API_URL": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "API_URL": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev"
+        "EXPO_PUBLIC_API_URL": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "API_URL": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/prod"
+        "EXPO_PUBLIC_API_URL": "https://lry5jjbrj8.execute-api.eu-central-1.amazonaws.com/prod"
       }
     },
     "apk": {
@@ -28,7 +28,7 @@
         "buildType": "apk"
       },
       "env": {
-        "API_URL": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/prod"
+        "EXPO_PUBLIC_API_URL": "https://lry5jjbrj8.execute-api.eu-central-1.amazonaws.com/prod"
       }
     }
   },

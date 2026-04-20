@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  ActivityIndicator, Alert, Modal, Pressable, StyleSheet,
-  Text, TextInput, View,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform,
+  Pressable, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import MapView, { Marker, MapPressEvent, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -89,7 +89,10 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.header}>
           <Pressable onPress={handleClose} hitSlop={12}>
             <MaterialCommunityIcons name="close" size={24} color="#111827" />
@@ -147,7 +150,7 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
             )}
           </View>
         )}
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

@@ -1,8 +1,8 @@
 import axios from 'axios';
-import Constants from 'expo-constants';
 import { useAuthStore } from '../store/authStore';
 
-const BASE_URL = Constants.expoConfig?.extra?.apiUrl as string;
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+console.log('[client] BASE_URL:', BASE_URL);
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
