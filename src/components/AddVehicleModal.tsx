@@ -120,21 +120,21 @@ export default function AddVehicleModal({ visible, userId, onClose, onCreated }:
         <Text style={styles.label}>{t('add_vehicle.name_label')}</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName}
           placeholder={t('add_vehicle.name_placeholder')} placeholderTextColor="#9CA3AF"
-          autoCapitalize="words" returnKeyType="next"
+          autoCapitalize="words" returnKeyType="next" maxLength={128}
           onSubmitEditing={() => plateRef.current?.focus()} blurOnSubmit={false} />
 
         {/* Plate */}
         <Text style={styles.label}>{t('add_vehicle.plate_label')}</Text>
         <TextInput ref={plateRef} style={styles.input} value={plateNumber} onChangeText={setPlateNumber}
           placeholder={t('add_vehicle.plate_placeholder')} placeholderTextColor="#9CA3AF"
-          autoCapitalize="characters" returnKeyType="next"
+          autoCapitalize="characters" returnKeyType="next" maxLength={32}
           onSubmitEditing={() => seatsRef.current?.focus()} blurOnSubmit={false} />
 
         {/* Seats */}
         <Text style={styles.label}>{t('add_vehicle.seats_label')}</Text>
         <TextInput ref={seatsRef} style={styles.input} value={seats} onChangeText={setSeats}
           placeholder={t('add_vehicle.seats_placeholder')} placeholderTextColor="#9CA3AF"
-          keyboardType="number-pad" returnKeyType="done"
+          keyboardType="number-pad" returnKeyType="done" maxLength={2}
           onSubmitEditing={handleSubmit} />
         </ScrollView>
       </View>

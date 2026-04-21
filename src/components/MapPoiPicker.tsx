@@ -131,6 +131,7 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
                   onChangeText={setPendingName}
                   placeholder="Enter location name"
                   autoFocus
+                  maxLength={128}
                 />
                 <View style={styles.panelButtons}>
                   <Pressable style={styles.cancelBtn} onPress={() => setPending(null)}>

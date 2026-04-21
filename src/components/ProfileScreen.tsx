@@ -150,6 +150,7 @@ export default function ProfileScreen({ currentUserId }: Props) {
         placeholderTextColor="#9CA3AF"
         autoCapitalize="words"
         returnKeyType="done"
+        maxLength={128}
       />
 
       {/* Phone — read-only */}

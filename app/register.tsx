@@ -92,6 +92,7 @@ export default function RegisterScreen() {
           onChangeText={setName}
           autoCapitalize="words"
           returnKeyType="next"
+          maxLength={128}
         />
 
         <Text style={styles.label}>{t('register.phone_label')}</Text>
@@ -102,6 +103,7 @@ export default function RegisterScreen() {
           onChangeText={setPhoneNumber}
           keyboardType="phone-pad"
           returnKeyType="done"
+          maxLength={32}
         />
 
         <Pressable
