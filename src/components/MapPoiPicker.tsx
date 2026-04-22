@@ -6,6 +6,7 @@ import {
 import MapView, { Marker, MapPressEvent, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Poi, createPoi } from '../api/poi';
 import { usePoiStore } from '../store/poiStore';
 
@@ -24,6 +25,7 @@ const INITIAL_REGION: Region = {
 };
 
 export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props) {
+  const { t } = useTranslation();
   const [pending, setPending] = useState<{ latitude: number; longitude: number } | null>(null);
   const [pendingName, setPendingName] = useState('');
   const [geocoding, setGeocoding] = useState(false);
@@ -81,7 +83,7 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
       setPendingName('');
       onSelect(poi);
     } catch {
-      Alert.alert('Error', 'Could not create location. Please try again.');
+      Alert.alert(t('common.error'), t('map_poi_picker.error'));
     } finally {
       setSaving(false);
     }
@@ -97,11 +99,11 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
           <Pressable onPress={handleClose} hitSlop={12}>
             <MaterialCommunityIcons name="close" size={24} color="#111827" />
           </Pressable>
-          <Text style={styles.title}>Select Location</Text>
+          <Text style={styles.title}>{t('map_poi_picker.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
 
-        <Text style={styles.hint}>Tap a pin to select an existing stop, or tap the map to create a new one.</Text>
+        <Text style={styles.hint}>{t('map_poi_picker.hint')}</Text>
 
         <MapView ref={mapRef} style={styles.map} initialRegion={INITIAL_REGION} onPress={handleMapPress}>
           {pois.filter((p) => p.latitude != null && p.longitude != null && isFinite(p.latitude) && isFinite(p.longitude)).map((poi) => (
@@ -124,18 +126,19 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
               <ActivityIndicator color="#2563EB" style={{ marginVertical: 12 }} />
             ) : (
               <>
-                <Text style={styles.panelLabel}>Name this stop</Text>
+                <Text style={styles.panelLabel}>{t('map_poi_picker.name_label')}</Text>
                 <TextInput
                   style={styles.nameInput}
                   value={pendingName}
                   onChangeText={setPendingName}
-                  placeholder="Enter location name"
+                  placeholder={t('map_poi_picker.name_placeholder')}
                   autoFocus
+                  selectTextOnFocus
                   maxLength={128}
                 />
                 <View style={styles.panelButtons}>
                   <Pressable style={styles.cancelBtn} onPress={() => setPending(null)}>
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                    <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.createBtn, (!pendingName.trim() || saving) && styles.createBtnDisabled]}
@@ -144,7 +147,7 @@ export default function MapPoiPicker({ visible, pois, onSelect, onClose }: Props
                   >
                     {saving
                       ? <ActivityIndicator size="small" color="#fff" />
-                      : <Text style={styles.createBtnText}>Create Stop</Text>}
+                      : <Text style={styles.createBtnText}>{t('map_poi_picker.create')}</Text>}
                   </Pressable>
                 </View>
               </>

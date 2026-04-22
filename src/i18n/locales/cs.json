@@ -148,5 +148,13 @@
   },
   "splash": {
     "loading": "Načítám vaše jízdy"
+  },
+  "map_poi_picker": {
+    "title": "Vybrat místo",
+    "hint": "Klepněte na špendlík pro výběr existující zastávky nebo klepněte na mapu pro vytvoření nové.",
+    "name_label": "Pojmenujte zastávku",
+    "name_placeholder": "Zadejte název místa",
+    "create": "Vytvořit zastávku",
+    "error": "Místo se nepodařilo vytvořit. Zkuste to znovu."
   }
 }
