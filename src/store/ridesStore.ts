@@ -14,6 +14,8 @@ export const useRidesStore = create<RidesState>((set, get) => ({
   loading: false,
   error: null,
 
+  reset: () => set({ rides: [], loading: false, error: null }),
+
   fetchRides: async () => {
     if (get().loading) {
       console.log('[rides] fetchRides — skipped (already in flight)');

@@ -11,6 +11,7 @@ export interface PatchUserPayload {
   name?: string;
   pushToken?: string;
   icon?: string;        // base64-encoded image
+  phoneNumber?: string;
 }
 
 export async function patchUser(id: number, payload: PatchUserPayload): Promise<void> {

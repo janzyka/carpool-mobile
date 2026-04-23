@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { router } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -17,5 +18,20 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Auto-logout on 401 — clears stale keychain credentials and returns to login.
+// Returns a never-resolving promise so the error never propagates to the calling
+// store — preventing error toasts from firing during the navigation transition.
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error?.response?.status === 401) {
+      await useAuthStore.getState().clearAuth();
+      router.replace('/register');
+      return new Promise(() => {});
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;

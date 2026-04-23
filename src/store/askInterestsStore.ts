@@ -13,6 +13,8 @@ export const useAskInterestsStore = create<AskInterestsState>((set, get) => ({
   byRideId: new Map(),
   loadingRideIds: new Set(),
 
+  reset: () => set({ byRideId: new Map(), loadingRideIds: new Set() }),
+
   fetchForAsk: async (rideId: number) => {
     if (get().loadingRideIds.has(rideId)) return;
 

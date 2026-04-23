@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Stack, useFocusEffect } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -49,7 +49,8 @@ export default function HomeScreen() {
     { id: 'asks',     label: t('tabs.asks'),     icon: 'help-circle-outline' },
     { id: 'profile',  label: t('tabs.profile'),  icon: 'account-circle'      },
   ];
-  const [activeTab, setActiveTab] = useState<Tab>('rides');
+  const { initialTab } = useLocalSearchParams<{ initialTab?: Tab }>();
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? 'rides');
   const [showAddRide, setShowAddRide] = useState(false);
   const [showAddAsk, setShowAddAsk]   = useState(false);
   const [showAllRequests, setShowAllRequests] = useState(false);

@@ -13,6 +13,8 @@ export const useAsksStore = create<AsksState>((set, get) => ({
   loading: false,
   error: null,
 
+  reset: () => set({ asks: [], loading: false, error: null }),
+
   fetchAsks: async () => {
     if (get().loading) {
       console.log('[asks] fetchAsks — skipped (already in flight)');

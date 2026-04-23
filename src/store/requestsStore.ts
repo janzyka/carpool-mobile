@@ -23,6 +23,8 @@ export const useRequestsStore = create<RequestsState>((set, get) => ({
   loading: false,
   error: null,
 
+  reset: () => set({ interests: [], loading: false, error: null }),
+
   fetchRequests: async (userId: number) => {
     if (get().loading) return;
     console.log(`[requests] fetchRequests → GET /ride-interests?created_for=${userId}`);

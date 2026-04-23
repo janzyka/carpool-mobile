@@ -1,52 +1,28 @@
 import apiClient from './client';
-import * as Localization from 'expo-localization';
 
-export interface RegisterResponse {
-  id: number;
-  message: string;
-}
-
-export interface VerifyResponse {
+export interface SocialAuthResponse {
   authKey: string;
-  message: string;
+  userId: number;
+  isNewUser: boolean;
 }
 
-export async function registerUser(
-  name: string,
-  phoneNumber: string,
-  icon?: string,
-): Promise<RegisterResponse> {
-  console.log('[auth] registerUser → POST /users', { name, phoneNumber, hasIcon: !!icon });
+export async function socialLogin(
+  provider: 'google' | 'apple',
+  token: string,
+  name?: string,
+): Promise<SocialAuthResponse> {
+  console.log('[auth] socialLogin → POST /auth/social', { provider });
   try {
-    const locale = Localization.getLocales()[0]?.languageCode ?? 'en';
-    const { data } = await apiClient.post<RegisterResponse>('/users', {
-      name,
-      phoneNumber,
-      locale,
-      ...(icon ? { icon } : {}),
+    const { data } = await apiClient.post<SocialAuthResponse>('/auth/social', {
+      provider,
+      token,
+      ...(name ? { name } : {}),
     });
-    console.log('[auth] registerUser ← success', data);
+    console.log('[auth] socialLogin ← success', { userId: data.userId, isNewUser: data.isNewUser });
     return data;
   } catch (error: any) {
-    console.error('[auth] registerUser ← error', error?.response?.status, error?.response?.data ?? error?.message);
+    console.error('[auth] socialLogin ← error', error?.response?.status, error?.response?.data ?? error?.message);
     throw error;
   }
 }
 
-export async function verifyUser(
-  userId: number,
-  verificationCode: number,
-): Promise<VerifyResponse> {
-  console.log(`[auth] verifyUser → POST /users/${userId}/verify`, { userId, verificationCode });
-  try {
-    const { data } = await apiClient.post<VerifyResponse>(
-      `/users/${userId}/verify`,
-      { verificationCode },
-    );
-    console.log('[auth] verifyUser ← success', data);
-    return data;
-  } catch (error: any) {
-    console.error('[auth] verifyUser ← error', error?.response?.status, error?.response?.data ?? error?.message);
-    throw error;
-  }
-}

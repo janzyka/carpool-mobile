@@ -67,13 +67,16 @@
   "profile": {
     "name_label": "Name",
     "name_placeholder": "Your name",
-    "phone_label": "Phone",
+    "phone_label": "Phone (optional)",
+    "phone_invalid": "Must start with + followed by up to 15 digits",
     "saved_title": "Saved",
     "saved_message": "Your profile has been updated.",
     "save_error": "Could not save your profile. Please try again.",
     "vehicles_title": "Vehicles",
     "no_vehicles": "No vehicles yet. Tap + to add one.",
     "privacy_policy": "Privacy Policy",
+    "logout": "Sign out",
+    "load_error": "Could not load profile. Please sign out and sign in again.",
     "delete_vehicle_title": "Delete vehicle",
     "delete_vehicle_message": "Remove \"{{name}}\"?",
     "delete_confirm": "Delete",
@@ -120,30 +123,10 @@
     "photo_permission_title": "Permission required",
     "photo_permission_message": "Allow access to your photo library."
   },
-  "register": {
-    "title": "Welcome to Carpool",
-    "subtitle": "Enter your details to get started",
-    "photo_optional": "Photo\n(optional)",
-    "name_label": "Name",
-    "name_placeholder": "Your name",
-    "phone_label": "Phone number",
-    "phone_placeholder": "+420 737 000 000",
-    "submit": "Go",
-    "name_required": "Please enter your name",
-    "phone_required": "Please enter your phone number",
-    "failed_title": "Registration failed",
-    "failed_message": "Please check your details and try again."
-  },
-  "verify": {
-    "title": "Verify your number",
-    "subtitle": "Enter the 6-digit code we sent to your phone.",
-    "checking": "Checking\u2026",
-    "sending": "Sending new code\u2026",
-    "resend": "Resend code",
-    "wrong_code_title": "Incorrect code",
-    "wrong_code_message": "The verification code is wrong. Please try again.",
-    "resend_failed_title": "Failed to resend",
-    "resend_failed_message": "Please try again."
+  "login": {
+    "subtitle": "Sign in to continue",
+    "failed_title": "Sign-in failed",
+    "failed_message": "Could not sign in. Please try again."
   },
   "splash": {
     "loading": "Loading your rides"

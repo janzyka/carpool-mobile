@@ -19,6 +19,8 @@ export const useVehiclesStore = create<VehiclesState>((set, get) => ({
   vehicleCache: new Map(),
   fetchingVehicleIds: new Set(),
 
+  reset: () => set({ vehicles: [], loading: false, vehicleCache: new Map(), fetchingVehicleIds: new Set() }),
+
   fetchVehicles: async (userId: number) => {
     if (get().loading) return;
     set({ loading: true });

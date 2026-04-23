@@ -18,7 +18,14 @@
       "bundleIdentifier": "com.zykyc.carpool",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Your location is used to centre the map when selecting a pickup or drop-off point."
+        "NSLocationWhenInUseUsageDescription": "Your location is used to centre the map when selecting a pickup or drop-off point.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.971278551355-62t0ol7n67ol3048iu2j5t7cjo2rict9"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -43,10 +50,14 @@
       "expo-router",
       "expo-secure-store",
       "@react-native-community/datetimepicker",
-      "./plugins/withAdiRegistration"
+      "./plugins/withAdiRegistration",
+      "@react-native-google-signin/google-signin",
+      "expo-apple-authentication"
     ],
     "extra": {
       "apiUrl": "https://5pqwkyomu6.execute-api.eu-central-1.amazonaws.com/dev",
+      "googleIosClientId": "971278551355-62t0ol7n67ol3048iu2j5t7cjo2rict9.apps.googleusercontent.com",
+      "googleWebClientId": "971278551355-hpe1qvo5c2g4bt2rv3sp4cv96pbpjj41.apps.googleusercontent.com",
       "router": {},
       "eas": {
         "projectId": "ace7f8d3-7406-4001-b0b6-4afbfd53ba26"

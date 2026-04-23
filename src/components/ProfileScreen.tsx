@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Swipeable } from 'react-native-gesture-handler';
+import { router } from 'expo-router';
 import { patchUser } from '../api/users';
+import { useAuthStore } from '../store/authStore';
 import { VehicleDto } from '../api/vehicles';
 import { useUserCacheStore } from '../store/userCacheStore';
 import { useVehiclesStore } from '../store/vehiclesStore';
@@ -22,13 +24,16 @@ interface Props {
 
 export default function ProfileScreen({ currentUserId }: Props) {
   const { t } = useTranslation();
+  const { clearAuth } = useAuthStore();
   const { getUser, ensureUser, refreshUser } = useUserCacheStore();
   const { vehicles, loading: vehiclesLoading, removeVehicle } = useVehiclesStore();
   const user = currentUserId ? getUser(currentUserId) : undefined;
 
   const [localName, setLocalName] = useState('');
+  const [localPhone, setLocalPhone] = useState('');
   const [localIcon, setLocalIcon] = useState<string | null>(null); // base64 of new pick, null = unchanged
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const initialised = useRef(false);
 
   const [showAddVehicle, setShowAddVehicle] = useState(false);
@@ -54,7 +59,7 @@ export default function ProfileScreen({ currentUserId }: Props) {
   }
 
   useEffect(() => {
-    if (currentUserId) ensureUser(currentUserId);
+    if (currentUserId) ensureUser(currentUserId).catch(() => setLoadError(true));
   }, [currentUserId]);
 
   // Initialise editable fields once user loads (only once).
@@ -62,12 +67,17 @@ export default function ProfileScreen({ currentUserId }: Props) {
     if (user && !initialised.current) {
       initialised.current = true;
       setLocalName(user.name);
+      setLocalPhone(user.phoneNumber ?? '');
     }
   }, [user]);
 
+  const phoneValue = localPhone.trim();
+  const phoneValid = phoneValue === '' || /^\+[0-9]{1,15}$/.test(phoneValue);
+
   const isDirty =
     (localName.trim() !== '' && localName.trim() !== user?.name) ||
-    localIcon !== null;
+    localIcon !== null ||
+    phoneValue !== (user?.phoneNumber ?? '');
 
   async function pickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -93,11 +103,13 @@ export default function ProfileScreen({ currentUserId }: Props) {
 
   async function handleSave() {
     if (!currentUserId || !isDirty) return;
+    if (!phoneValid) return;
     setSaving(true);
     try {
-      const payload: { name?: string; icon?: string } = {};
+      const payload: { name?: string; icon?: string; phoneNumber?: string } = {};
       if (localName.trim() !== user?.name) payload.name = localName.trim();
       if (localIcon !== null) payload.icon = localIcon;
+      if (localPhone.trim() !== (user?.phoneNumber ?? '')) payload.phoneNumber = localPhone.trim();
       await patchUser(currentUserId, payload);
       await refreshUser(currentUserId);
       setLocalIcon(null); // mark icon change as committed
@@ -109,10 +121,21 @@ export default function ProfileScreen({ currentUserId }: Props) {
     }
   }
 
+  const logout = async () => { await clearAuth(); router.replace('/register'); };
+
   if (!user) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3D3530" />
+        {loadError ? (
+          <>
+            <Text style={styles.errorMessage}>{t('profile.load_error')}</Text>
+            <Pressable style={styles.logoutButton} onPress={logout}>
+              <Text style={styles.logoutLabel}>{t('profile.logout')}</Text>
+            </Pressable>
+          </>
+        ) : (
+          <ActivityIndicator size="large" color="#3D3530" />
+        )}
       </View>
     );
   }
@@ -153,11 +176,21 @@ export default function ProfileScreen({ currentUserId }: Props) {
         maxLength={128}
       />
 
-      {/* Phone — read-only */}
+      {/* Phone — editable */}
       <Text style={styles.label}>{t('profile.phone_label')}</Text>
-      <View style={styles.readOnly}>
-        <Text style={styles.readOnlyText}>{user.phoneNumber ?? '—'}</Text>
-      </View>
+      <TextInput
+        style={[styles.input, !phoneValid && styles.inputError]}
+        value={localPhone}
+        onChangeText={setLocalPhone}
+        placeholder="+420 737 000 000"
+        placeholderTextColor="#9CA3AF"
+        keyboardType="phone-pad"
+        returnKeyType="done"
+        maxLength={16}
+      />
+      {!phoneValid && (
+        <Text style={styles.errorText}>{t('profile.phone_invalid')}</Text>
+      )}
 
       {/* Save button — only visible when there are pending changes */}
       {isDirty && (
@@ -224,6 +257,13 @@ export default function ProfileScreen({ currentUserId }: Props) {
       >
         <Text style={styles.privacyLinkText}>{t('profile.privacy_policy')}</Text>
       </Pressable>
+
+      <Pressable
+        style={styles.logoutButton}
+        onPress={logout}
+      >
+        <Text style={styles.logoutLabel}>{t('profile.logout')}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -267,15 +307,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 16, color: '#111827',
   },
-  readOnly: {
-    width: '100%', backgroundColor: 'rgba(255,255,255,0.5)',
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12,
+  inputError: {
+    borderColor: '#EF4444',
   },
-  readOnlyText: { fontSize: 16, color: '#6B7280' },
+  errorText: {
+    alignSelf: 'flex-start', fontSize: 12, color: '#EF4444', marginTop: 4,
+  },
   saveButton: {
     marginTop: 32, width: '100%', backgroundColor: '#3D3530',
     borderRadius: 12, paddingVertical: 14, alignItems: 'center',
   },
   saveLabel: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  errorMessage: { fontSize: 15, color: '#6B7280', marginBottom: 16, textAlign: 'center', paddingHorizontal: 32 },
+  logoutButton: {
+    marginTop: 24, width: '100%',
+    backgroundColor: '#EF4444', borderRadius: 12,
+    paddingVertical: 13, alignItems: 'center',
+  },
+  logoutLabel: { fontSize: 15, fontWeight: '600', color: '#fff' },
 });

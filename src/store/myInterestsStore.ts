@@ -22,6 +22,8 @@ export const useMyInterestsStore = create<MyInterestsState>((set, get) => ({
   byRideId: new Map(),
   loading: false,
 
+  reset: () => set({ byRideId: new Map(), loading: false }),
+
   fetchMyInterests: async (userId: number) => {
     if (get().loading) return;
     console.log(`[interests] fetchMyInterests → GET /ride-interests?created_by=${userId}`);

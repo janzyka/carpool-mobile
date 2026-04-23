@@ -68,13 +68,16 @@
   "profile": {
     "name_label": "Jméno",
     "name_placeholder": "Vaše jméno",
-    "phone_label": "Telefon",
+    "phone_label": "Telefon (volitelný)",
+    "phone_invalid": "Musí začínat znakem + a obsahovat až 15 číslic",
     "saved_title": "Uloženo",
     "saved_message": "Váš profil byl aktualizován.",
     "save_error": "Profil se nepodařilo uložit. Zkuste to znovu.",
     "vehicles_title": "Vozidla",
     "no_vehicles": "Žádná vozidla. Klepněte na + pro přidání.",
     "privacy_policy": "Zásady ochrany osobních údajů",
+    "logout": "Odhlásit se",
+    "load_error": "Profil se nepodařilo načíst. Odhlaste se a přihlaste se znovu.",
     "delete_vehicle_title": "Smazat vozidlo",
     "delete_vehicle_message": "Odebrat \"{{name}}\"?",
     "delete_confirm": "Smazat",
@@ -121,30 +124,10 @@
     "photo_permission_title": "Potřebná oprávnění",
     "photo_permission_message": "Povolte přístup k fotogalerii."
   },
-  "register": {
-    "title": "Vítejte ve spolujízdě",
-    "subtitle": "Zaregistrujte se",
-    "photo_optional": "Foto\n(volitelné)",
-    "name_label": "Jméno",
-    "name_placeholder": "Vaše jméno",
-    "phone_label": "Telefonní číslo",
-    "phone_placeholder": "+420 737 000 000",
-    "submit": "Pokračovat",
-    "name_required": "Zadejte prosím své jméno",
-    "phone_required": "Zadejte prosím své telefonní číslo",
-    "failed_title": "Registrace se nezdařila",
-    "failed_message": "Zkontrolujte své údaje a zkuste to znovu."
-  },
-  "verify": {
-    "title": "Ověřte své číslo",
-    "subtitle": "Zadejte 6ti místný kód, který jsme odeslali na váš telefon.",
-    "checking": "Ověřuji\u2026",
-    "sending": "Odesílám nový kód\u2026",
-    "resend": "Odeslat kód znovu",
-    "wrong_code_title": "Nesprávný kód",
-    "wrong_code_message": "Ověřovací kód je nesprávný. Zkuste to znovu.",
-    "resend_failed_title": "Odeslání se nezdařilo",
-    "resend_failed_message": "Zkuste to znovu."
+  "login": {
+    "subtitle": "Přihlaste se pro pokračování",
+    "failed_title": "Přihlášení se nezdařilo",
+    "failed_message": "Nepodařilo se přihlásit. Zkuste to prosím znovu."
   },
   "splash": {
     "loading": "Načítám vaše jízdy"
