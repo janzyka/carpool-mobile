@@ -46,7 +46,8 @@ export default function RegisterScreen() {
     } catch (err: any) {
       console.error('[Google] sign-in error:', JSON.stringify(err), err?.message, err?.code);
       if (err?.code !== 'SIGN_IN_CANCELLED') {
-        Alert.alert(t('login.failed_title'), t('login.failed_message'));
+        const detail = err?.code ? `[${err.code}] ${err?.message ?? ''}` : (err?.message ?? String(err));
+        Alert.alert(t('login.failed_title'), detail);
       }
     } finally {
       setLoading(false);

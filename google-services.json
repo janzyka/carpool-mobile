@@ -12,7 +12,24 @@
           "package_name": "com.zykyc.carpool"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "971278551355-s7ohlp61oo3fokcddij3k2rdpi7hqcp7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zykyc.carpool",
+            "certificate_hash": "d717ecf06f833e2c11eb225dde2a582d7573e6ad"
+          }
+        },
+        {
+          "client_id": "971278551355-li7dg1bsa6pnmprqqpmdkalueegmakpd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zykyc.carpool",
+            "certificate_hash": "08bec3bc456db2fcf6f7480fa266b9830d2a69cb"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBZyUwKomrQrmyme95tvretOHmr2YPPllY"
